@@ -35,6 +35,7 @@
 
     public class Episode
     {
+        public string Id { get; set; }
         public string Name { get; set; }
 
         public string ShowId { get; set; }
@@ -43,6 +44,9 @@
 
         [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime AirDate { get; set; }
+
+        [JsonConverter(typeof(DateTimeConvertor))]
+        public DateTime LockDate { get; set; }
 
     }
 }

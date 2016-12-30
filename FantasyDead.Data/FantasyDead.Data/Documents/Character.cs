@@ -1,13 +1,23 @@
 ﻿namespace FantasyDead.Data.Documents
 {
+    using Microsoft.WindowsAzure.Storage.Table;
     using System;
 
     /// <summary>
-    /// Class/document representing a character.
+    /// Class/table entity representing a character.
+    /// Pkey = "characters"
+    /// Rkey = id
     /// </summary>
-    public class Character
+    public class Character : TableEntity
     {
-        public string Id { get; set; }
+        public static string Pkey = "characters";
+
+        public Character()
+        {
+            this.PartitionKey = Pkey;            
+        }
+
+        public string Id => this.RowKey;
 
         public string Name { get; set; }
 
