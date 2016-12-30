@@ -1,10 +1,13 @@
-﻿using FantasyDead.Data.Documents;
+﻿using FantasyDead.Data.Configuration;
+using FantasyDead.Data.Documents;
 using FantasyDead.Data.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net;
@@ -22,6 +25,7 @@ namespace FantasyDead.Data
     {
 
         private readonly CloudTable stats;
+        private readonly CloudTable configuration;
         private readonly ObjectCache cache;
 
         private readonly DocumentClient db;
@@ -49,6 +53,15 @@ namespace FantasyDead.Data
             this.showColUri = UriFactory.CreateDocumentCollectionUri(dbName, picksCol);
 
             this.telemtry = new TelemetryClient();
+
+            var act = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["cloudStorage"]);
+            var client = act.CreateCloudTableClient();
+
+            this.stats = client.GetTableReference("stats");
+            this.stats.CreateIfNotExists();
+
+            this.configuration = client.GetTableReference("configuration");
+            this.configuration.CreateIfNotExists();
         }
 
 
@@ -144,11 +157,11 @@ namespace FantasyDead.Data
                 return cachedPerson as Person;
 
             var person = from p in this.db.CreateDocumentQuery<Person>(this.peopleColUri) where p.Id == personId select p;
-            var p = person.ToList().FirstOrDefault();
+            var newP = person.ToList().FirstOrDefault();
 
-            this.cache.Add(key, p, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
+            this.cache.Add(key, newP, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
 
-            return p;
+            return newP;
         }
 
 
@@ -203,6 +216,51 @@ namespace FantasyDead.Data
 
         #region Generic Data Contextual Info
 
+        /// <summary>
+        /// Fetches the current configuration of event definitions. Cached for 5 minutes; this can be overridden by setting the isCached paramater to false.
+        /// </summary>
+        /// <param name="isCached"></param>
+        /// <returns></returns>
+        public DataContextResponse FetchEventDefinitions(bool isCached = true)
+        {
+            var cached = this.cache.Get(EventDefinition.Pkey);
+            if (cached != null && isCached)
+            {
+                var cachedResult = cached as List<EventDefinition>;
+                return new DataContextResponse { Content = cachedResult };
+            }
+
+            var pkey = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, EventDefinition.Pkey);
+            var q = new TableQuery<EventDefinition>().Where(pkey);
+            var results = this.configuration.ExecuteQuery(q).ToList();
+
+            this.cache.Set(EventDefinition.Pkey, results, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)) });
+
+            return new DataContextResponse { Content = results };
+        }
+
+
+        /// <summary>
+        /// Fetches the current configuration of event modifiers. Cached for 5 minutes; this can be overridden by setting the isCached paramater to false.
+        /// </summary>
+        /// <param name="isCached"></param>
+        /// <returns></returns>
+        public DataContextResponse FetchEventModifiers(bool isCached = true)
+        {
+            var cached = this.cache.Get(EventModifier.Pkey);
+            if (cached != null && isCached)
+            {
+                var cachedResult = cached as List<EventModifier>;
+                return new DataContextResponse { Content = cachedResult };
+            }
+
+            var pkey = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, EventModifier.Pkey);
+            var q = new TableQuery<EventModifier>().Where(pkey);
+            var results = this.configuration.ExecuteQuery(q).ToList();
+            this.cache.Set(EventModifier.Pkey, results, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)) });
+
+            return new DataContextResponse { Content = results };
+        }
 
 
 
@@ -245,7 +303,7 @@ namespace FantasyDead.Data
         /// <returns></returns>
         public DataContextResponse GetEpisodePicks(string personId, string episodeId)
         {
-            var picks = from pk in this.db.CreateDocumentQuery<EpisodePick>(picksColUri) where pk.EpisodeId == episodeId && pk.PersonId == personId select pk);
+            var picks = from pk in this.db.CreateDocumentQuery<EpisodePick>(picksColUri) where pk.EpisodeId == episodeId && pk.PersonId == personId select pk;
             var result = picks.ToList();
 
             return new DataContextResponse { Content = result };

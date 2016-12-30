@@ -81,6 +81,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\DateTimeConvertor.cs" />
+    <Compile Include="Configuration\EventDefinition.cs" />
+    <Compile Include="Configuration\EventModifier.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="Documents\Character.cs" />
     <Compile Include="Documents\PersonModels.cs" />
