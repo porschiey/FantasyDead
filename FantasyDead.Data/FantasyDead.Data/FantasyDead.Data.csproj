@@ -86,7 +86,7 @@
     <Compile Include="Documents\PersonModels.cs" />
     <Compile Include="Documents\ShowModels.cs" />
     <Compile Include="Models\CharacterEvent.cs" />
-    <Compile Include="Models\EpisodePick.cs" />
+    <Compile Include="Documents\EpisodePick.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
