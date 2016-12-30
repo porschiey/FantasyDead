@@ -1,5 +1,7 @@
 ﻿namespace FantasyDead.Data.Documents
 {
+    using Configuration;
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
 
@@ -20,8 +22,10 @@
 
         public string Name { get; set; }
 
+        [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime StartDate { get; set; }
 
+        [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime EndDate { get; set; }
 
         public string ShowId { get; set; }
@@ -37,6 +41,7 @@
 
         public string SeasonId { get; set; }
 
+        [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime AirDate { get; set; }
 
     }
