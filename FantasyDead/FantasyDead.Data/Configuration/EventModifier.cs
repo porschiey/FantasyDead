@@ -17,6 +17,8 @@
             this.RowKey = Guid.NewGuid().ToString();
         }
 
+        public string Id => this.RowKey;
+
         public string Name { get; set; }
 
         public string Description { get; set; }

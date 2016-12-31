@@ -21,12 +21,16 @@
             this.PartitionKey = Pkey;
             this.RowKey = Guid.NewGuid().ToString();
         }
+
+        public string Id => this.RowKey;
         
         public string Name { get; set; }
 
         public string Description { get; set; }
 
         public string SpecialRules { get; set; }
+
+        public double PointValue { get; set; }
 
         public int CategoryInt { get; set; }        
 

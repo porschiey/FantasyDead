@@ -1,8 +1,10 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
     using App_Start;
+    using Data;
     using Data.Documents;
     using Data.Models;
+    using Parts;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -17,17 +19,77 @@
     public class EventController : ApiController
     {
 
+        private readonly DataContext db;
+        private readonly PointCalculator calc;
+
+        public EventController()
+        {
+            this.db = new DataContext();
+            this.calc = new PointCalculator(this.db);
+        }
+
         /// <summary>
         /// PUT api/event
-        /// Adds an event to the system. DOES NOT CALCULATE STATS.
+        /// Adds an event to the system. DOES NOT CALCULATE STATS FOR SYSTEM.
         /// </summary>
         /// <param name="ev"></param>
         /// <returns></returns>
         [HttpPut]
         [Route("api/event")]
-        public HttpResponseMessage AddEvent([FromBody] CharacterEvent ev)
+        public HttpResponseMessage UpsertEvent([FromBody] CharacterEvent ev)
         {
-            throw new NotImplementedException();
+
+            ev = this.calc.CalculateEvent(ev); //only formulates the amount of points this event is worth
+            this.db.AddEvent(ev);
+            return this.Request.CreateResponse(HttpStatusCode.Created);
+        }
+
+        /// <summary>
+        /// DELETE api/event/{eventId}/character/{characterId}
+        /// Removes an event from the system. Does not trigger a re-calculation.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("api/event/{eventId}/character/{characterId}")]
+        public HttpResponseMessage DeleteEvent(string characterId, string eventId)
+        {
+            this.db.RemoveEvent(characterId, eventId);
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// GET api/event/calculate/{episodeId}
+        /// Runs calculation on an entire episode, scoring characters and rewarding points to users. 
+        /// The most data extensive method in the API.
+        /// </summary>
+        /// <param name="episodeId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/event/calculate/{episodeId}")]
+        public HttpResponseMessage Calculate(string episodeId)
+        {
+
+            var showData = this.db.FetchShowData().Content as List<Show>;
+            var thisShow = showData.First(s => s.Seasons.Any(se => se.Episodes.Any(e => e.Id == episodeId)));
+
+            this.calc.StartEpisodeCalculation(episodeId, thisShow.Id);
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+
+        /// <summary>
+        /// GET api/event/list/{characterId}
+        /// Lists all of the events for a character.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/event/list/{characterId}")]
+        public HttpResponseMessage ListEvents(string characterId)
+        {
+            throw new NotImplementedException(); //TODO: MOVE TO STATS CONTROLLER
         }
     }
 }

@@ -201,6 +201,7 @@
     </Compile>
     <Compile Include="Models\RegistrationRequest.cs" />
     <Compile Include="Models\SlimPerson.cs" />
+    <Compile Include="Parts\PointCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

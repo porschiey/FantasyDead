@@ -9,6 +9,7 @@
     /// </summary>
     public class CharacterEvent : TableEntity
     {
+
         public string EpisodeId { get; set; }
 
         public string ShowId { get; set; }
@@ -21,10 +22,22 @@
 
         public double Points { get; set; }
 
-        public int ActionId { get; set; }
+        public string ActionId { get; set; }
 
-        public int ModifierId { get; set; }
+        public string ModifierId { get; set; }
 
         public string Notes { get; set; }
+    }
+
+
+    /// <summary>
+    /// Same object as <see cref="CharacterEvent"/> except the PartitionKey is different for searchability's sake.
+    /// </summary>
+    public class CharacterEventIndex : CharacterEvent
+    {
+        public new string CharacterId { get; set; }
+
+        public new string EpisodeId => this.PartitionKey;
+
     }
 }

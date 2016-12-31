@@ -22,7 +22,7 @@
     /// </summary>
     public sealed class DataContext
     {
-        private readonly CloudTable stats;
+        private readonly CloudTable events;
         private readonly CloudTable configuration;
         private readonly ObjectCache cache;
 
@@ -55,8 +55,8 @@
             var act = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["cloudStorage"]);
             var client = act.CreateCloudTableClient();
 
-            this.stats = client.GetTableReference("stats");
-            this.stats.CreateIfNotExists();
+            this.events = client.GetTableReference("events");
+            this.events.CreateIfNotExists();
 
             this.configuration = client.GetTableReference("configuration");
             this.configuration.CreateIfNotExists();
@@ -503,10 +503,126 @@
 
             var op = TableOperation.InsertOrReplace(item);
             this.configuration.Execute(op);
+
+            ((MemoryCache)this.cache).Dispose(); //clear cache
+        }
+
+        #endregion
+
+
+        #region Events (CRUD)
+
+        /// <summary>
+        /// Inserts or updates an event in the event store for a character. Does NOT trigger a calculation.
+        /// </summary>
+        /// <param name="ev"></param>
+        public void AddEvent(CharacterEvent ev)
+        {
+            if (ev == null || string.IsNullOrWhiteSpace(ev.ActionId) || string.IsNullOrWhiteSpace(ev.EpisodeTimestamp))
+                throw new ArgumentNullException("Not enough information for a valid event.", nameof(ev));
+
+            var op = TableOperation.InsertOrReplace(ev);
+            this.events.Execute(op);
+
+            var episodeIndex = new CharacterEventIndex
+            {
+                PartitionKey = ev.EpisodeId,
+                RowKey = ev.RowKey,
+                CharacterId = ev.CharacterId,
+                ModifierId = ev.ModifierId,
+                ActionId = ev.ActionId,
+                Notes = ev.Notes,
+                Points = ev.Points,
+                EpisodeTimestamp = ev.EpisodeTimestamp,
+                ShowId = ev.ShowId
+            };
+            var op2 = TableOperation.InsertOrReplace(episodeIndex);
+            this.events.Execute(op2);
+        }
+
+        /// <summary>
+        /// Removes an event from the store. This does NOT trigger a recalculation.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <param name="eventId"></param>
+        public void RemoveEvent(string characterId, string eventId)
+        {
+            var ev = this.FetchSingleEvent(characterId, eventId);
+            var op = TableOperation.Delete(ev);
+            this.events.Execute(op);
+
+            Task.Run(() =>
+            {
+                var evIx = this.FetchSingleEventByEpisode(ev.EpisodeId, ev.Id);
+                var op2 = TableOperation.Delete(evIx);
+                this.events.Execute(op2);
+            });
+        }
+
+        /// <summary>
+        /// Fetches all events related to a character, irrespective of episode.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <returns></returns>
+        public List<CharacterEvent> FetchEventsForCharacter(string characterId)
+        {
+            return this.FetchEventsByPkey(characterId);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="episodeId"></param>
+        /// <returns></returns>
+        public List<CharacterEvent> FetchEventsForEpisode(string episodeId)
+        {
+            return this.FetchEventsByPkey(episodeId);
+        }
+
+        /// <summary>
+        /// Returns a single event for a character.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public CharacterEvent FetchSingleEvent(string characterId, string eventId)
+        {
+            return this.FetchSingleEventByKeys(characterId, eventId);
         }
 
 
+        /// <summary>
+        /// Returns a single event for an episode.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public CharacterEvent FetchSingleEventByEpisode(string episodeId, string eventId)
+        {
+            return this.FetchSingleEventByKeys(episodeId, eventId);
+        }
+
+
+        private List<CharacterEvent> FetchEventsByPkey(string pkey)
+        {
+            var pkeyF = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, pkey);
+            var q = new TableQuery<CharacterEvent>().Where(pkeyF);
+            return this.events.ExecuteQuery(q).ToList();
+        }
+
+        private CharacterEvent FetchSingleEventByKeys(string pkey, string rkey)
+        {
+            var pkeyF = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, pkey);
+            var rkeyF = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rkey);
+            var filter = TableQuery.CombineFilters(pkeyF, TableOperators.And, rkeyF);
+            var q = new TableQuery<CharacterEvent>().Where(filter);
+
+            return q
+                .ToList() //execute
+                .FirstOrDefault(); //return single
+        }
         #endregion
+
     }
 
 
