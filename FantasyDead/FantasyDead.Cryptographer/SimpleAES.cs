@@ -2,6 +2,7 @@
 using System.Data;
 using System.Security.Cryptography;
 using System.IO;
+using System.Text;
 
 /////////// FROM STACKOVERFLOW http://stackoverflow.com/questions/165808/simple-two-way-encryption-for-c-sharp
 
@@ -112,47 +113,14 @@ public class SimpleAES
         return UTFEncoder.GetString(decryptedBytes);
     }
 
-    /// Convert a string to a byte array.  NOTE: Normally we'd create a Byte Array from a string using an ASCII encoding (like so).
-    //      System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-    //      return encoding.GetBytes(str);
-    // However, this results in character values that cannot be passed in a URL.  So, instead, I just
-    // lay out all of the byte values in a long string of numbers (three per - must pad numbers less than 100).
     public byte[] StrToByteArray(string str)
     {
-        if (str.Length == 0)
-            throw new Exception("Invalid string value in StrToByteArray");
-
-        byte val;
-        byte[] byteArr = new byte[str.Length / 3];
-        int i = 0;
-        int j = 0;
-        do
-        {
-            val = byte.Parse(str.Substring(i, 3));
-            byteArr[j++] = val;
-            i += 3;
-        }
-        while (i < str.Length);
-        return byteArr;
+        var bytes = Convert.FromBase64String(str);
+        return bytes;
     }
-
-    // Same comment as above.  Normally the conversion would use an ASCII encoding in the other direction:
-    //      System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-    //      return enc.GetString(byteArr);    
+  
     public string ByteArrToString(byte[] byteArr)
     {
-        byte val;
-        string tempStr = "";
-        for (int i = 0; i <= byteArr.GetUpperBound(0); i++)
-        {
-            val = byteArr[i];
-            if (val < (byte)10)
-                tempStr += "00" + val.ToString();
-            else if (val < (byte)100)
-                tempStr += "0" + val.ToString();
-            else
-                tempStr += val.ToString();
-        }
-        return tempStr;
+        return Convert.ToBase64String(byteArr);
     }
 }

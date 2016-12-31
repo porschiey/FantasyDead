@@ -23,7 +23,10 @@
 
         public DateTime CreatedDate { get; set; }
 
-        public DateTime DeadDate { get; set; }
+        /// <summary>
+        /// Nullable.
+        /// </summary>
+        public string DeadDateIso { get; set; }
 
         public string Description { get; set; }
 

@@ -7,6 +7,7 @@
 
     public class Show
     {
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
         public string Name { get; set; }
@@ -18,6 +19,7 @@
 
     public class Season
     {
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
         public string Name { get; set; }
@@ -35,6 +37,7 @@
 
     public class Episode
     {
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
         public string Name { get; set; }
 

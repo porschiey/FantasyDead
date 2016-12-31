@@ -34,6 +34,9 @@
         [Route("api/character")]
         public HttpResponseMessage CreateOrUpdate([FromBody] Character character)
         {
+            if (this.Requestor.Role != PersonRole.Admin)
+                return this.SpitForbidden();
+
             if (string.IsNullOrWhiteSpace(character.Id))
                 character.RowKey = Guid.NewGuid().ToString();
 

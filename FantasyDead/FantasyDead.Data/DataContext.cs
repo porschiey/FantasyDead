@@ -48,7 +48,7 @@
             this.db = new DocumentClient(new Uri("https://fantasydead.documents.azure.com:443/"), ConfigurationManager.AppSettings["docuDbKey"]);
             this.peopleColUri = UriFactory.CreateDocumentCollectionUri(dbName, peopleCol);
             this.showColUri = UriFactory.CreateDocumentCollectionUri(dbName, showsCol);
-            this.showColUri = UriFactory.CreateDocumentCollectionUri(dbName, picksCol);
+            this.picksColUri = UriFactory.CreateDocumentCollectionUri(dbName, picksCol);
 
             this.telemtry = new TelemetryClient();
 
@@ -149,6 +149,9 @@
         /// <returns></returns>
         public Person GetPerson(string personId)
         {
+            if (string.IsNullOrWhiteSpace(personId))
+                return null;
+
             var key = personId;
             var cachedPerson = this.cache.Get(key);
             if (cachedPerson != null)
@@ -157,7 +160,8 @@
             var person = from p in this.db.CreateDocumentQuery<Person>(this.peopleColUri) where p.Id == personId select p;
             var newP = person.ToList().FirstOrDefault();
 
-            this.cache.Add(key, newP, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
+            if (newP != null)
+                this.cache.Add(key, newP, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
 
             return newP;
         }
@@ -201,10 +205,11 @@
                 return cachedPerson as Person;
 
             var person = this.db.CreateDocumentQuery<Person>(this.peopleColUri,
-                $"select p from people p join i in p.identities where i.platformUserId = '{socialId.PlatformUserId}' and i.platformName = '{socialId.PlatformName}'");
+                $"select p.id, p.Username, p.Identities, p.Role from people p join i in p.Identities where i.PlatformUserId = '{socialId.PlatformUserId}' and i.PlatformName = '{socialId.PlatformName}'");
             var p = person.ToList().FirstOrDefault();
 
-            this.cache.Add(key, p, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
+            if (p != null)
+                this.cache.Add(key, p, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
 
             return p;
         }
@@ -268,13 +273,15 @@
         {
             const string key = "show-data";
             var data = this.cache.Get(key);
-            if (data == null && isCached)
+            if (data != null && isCached)
                 return new DataContextResponse { Content = data as List<Show> };
 
             var shows = from s in this.db.CreateDocumentQuery<Show>(showColUri) select s;
             var result = shows.Take(10).ToList();
 
-            this.cache.Set(key, result, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) });
+            if (result.Any())
+                this.cache.Set(key, result, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) });
+
             return new DataContextResponse { Content = result };
         }
 
@@ -394,17 +401,21 @@
         {
             try
             {
-                await this.db.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(dbName, showsCol, show.Id), show);
-                return DataContextResponse.Ok;
-            }
-            catch (DocumentClientException dce)
-            {
-                if (dce.StatusCode == HttpStatusCode.NotFound)
+                //already exists?
+                var showData = this.FetchShowData(false).Content as List<Show>;
+                if (showData.Any(s => s.Id == show.Id))
+                {
+                    await this.db.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(dbName, showsCol, show.Id), show);
+                    return DataContextResponse.Ok;
+                }
+                else
                 {
                     await this.db.CreateDocumentAsync(this.showColUri, show); //create it
                     return DataContextResponse.Ok;
                 }
-
+            }
+            catch (DocumentClientException dce)
+            {
                 this.telemtry.TrackException(dce);
                 return DataContextResponse.Error((HttpStatusCode)dce.StatusCode, dce.Message);
             }
@@ -417,7 +428,7 @@
         /// <returns></returns>
         public async Task<DataContextResponse> UpsertSeason(Season season)
         {
-            var shows = this.FetchShowData().Content as List<Show>;
+            var shows = this.FetchShowData(false).Content as List<Show>;
             var relatedShow = shows.FirstOrDefault(s => s.Id == season.ShowId);
             if (relatedShow == null)
                 return DataContextResponse.Error(HttpStatusCode.NotFound, "Show not found.");
@@ -451,7 +462,7 @@
         /// <returns></returns>
         public async Task<DataContextResponse> UpsertEpisode(Episode episode)
         {
-            var shows = this.FetchShowData().Content as List<Show>;
+            var shows = this.FetchShowData(false).Content as List<Show>;
             var relatedShow = shows.FirstOrDefault(s => s.Id == episode.ShowId);
             if (relatedShow == null)
                 return DataContextResponse.Error(HttpStatusCode.NotFound, "Show not found.");

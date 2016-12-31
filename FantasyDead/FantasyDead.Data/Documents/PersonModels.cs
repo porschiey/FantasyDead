@@ -8,6 +8,7 @@
 
     public class Person
     {
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
         public string PersonId { get { return this.Id; } set { this.Id = value; } }

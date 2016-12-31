@@ -7,6 +7,7 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Threading.Tasks;
     using System.Web.Http;
 
     /// <summary>
@@ -30,7 +31,7 @@
         /// </summary>
         [HttpPut]
         [Route("api/show")]
-        public HttpResponseMessage UpsertShow([FromBody] Show show)
+        public async Task<HttpResponseMessage> UpsertShow([FromBody] Show show)
         {
             if (this.Requestor.Role != PersonRole.Admin)
                 return this.SpitForbidden();
@@ -45,7 +46,7 @@
 
             show.Seasons = show.Seasons.Select(s => this.ForceIdMapping(s, show.Id)).ToList();
 
-            return this.ConvertDbResponse(this.db.UpsertShow(show).Result);
+            return this.ConvertDbResponse(await this.db.UpsertShow(show));
         }
 
         /// <summary>
@@ -55,7 +56,7 @@
         /// <returns></returns>
         [HttpPut]
         [Route("api/show/season")]
-        public HttpResponseMessage UpsertSeason([FromBody]Season season)
+        public async Task<HttpResponseMessage> UpsertSeason([FromBody]Season season)
         {
             if (this.Requestor.Role != PersonRole.Admin)
                 return this.SpitForbidden();
@@ -64,7 +65,7 @@
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Season is null or show id is invalid.");
 
             season = this.ForceIdMapping(season, season.ShowId);
-            return this.ConvertDbResponse(this.db.UpsertSeason(season).Result);
+            return this.ConvertDbResponse(await this.db.UpsertSeason(season));
         }
 
         /// <summary>
@@ -75,7 +76,7 @@
         /// <returns></returns>
         [HttpPut]
         [Route("api/show/season/episode")]
-        public HttpResponseMessage UpsertEpisode([FromBody]Episode episode)
+        public async Task<HttpResponseMessage> UpsertEpisode([FromBody]Episode episode)
         {
             if (this.Requestor.Role != PersonRole.Admin)
                 return this.SpitForbidden();
@@ -86,7 +87,7 @@
             if (string.IsNullOrWhiteSpace(episode.Id))
                 episode.Id = Guid.NewGuid().ToString();
 
-            return this.ConvertDbResponse(this.db.UpsertEpisode(episode).Result);
+            return this.ConvertDbResponse(await this.db.UpsertEpisode(episode));
         }
 
         private Season ForceIdMapping(Season season, string showId)

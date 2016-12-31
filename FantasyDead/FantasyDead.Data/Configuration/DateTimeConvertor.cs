@@ -23,6 +23,12 @@
                     reader.TokenType));
             }
 
+            DateTime parsed;
+            if (DateTime.TryParse((string)reader.Value, out parsed)) //try normal parsing first
+            {
+                return parsed;
+            }
+
             var ticks = (string)reader.Value;
             return new DateTime(Convert.ToInt64(ticks));
         }

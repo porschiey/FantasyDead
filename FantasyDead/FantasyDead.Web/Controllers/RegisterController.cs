@@ -7,8 +7,10 @@
     using Models;
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Threading.Tasks;
     using System.Web.Http;
 
 
@@ -32,8 +34,12 @@
         /// <returns>On success, it will return an api token.</returns>
         [HttpPut]
         [Route("api/register")]
-        public HttpResponseMessage Register([FromBody] RegistrationRequest req)
+        public async Task<HttpResponseMessage> Register([FromBody] RegistrationRequest req)
         {
+            var crypto = new Cryptographer();
+
+            req.SocialIdentity.Credentials = crypto.Encrypt(req.SocialIdentity.Credentials);
+
             var person = new Person
             {
                 PersonId = Guid.NewGuid().ToString(),
@@ -45,7 +51,9 @@
                 Role = (int)PersonRole.Member
             };
 
-            var response = this.db.Register(person).Result;
+
+
+            var response = await this.db.Register(person);
 
             if (response.StatusCode != HttpStatusCode.Created)
             {
@@ -54,11 +62,39 @@
             else
             {
                 //create token
-                var token = new Cryptographer().CreateToken(person.Id, person.Username, person.Role);
+                var token = crypto.CreateToken(person.Id, person.Username, person.Role);
                 return this.Request.CreateResponse(response.StatusCode, token);
             }
         }
 
+        /// <summary>
+        /// PUT api/register/login
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/register/login")]
+        public async Task<HttpResponseMessage> Login([FromBody] SocialIdentity id)
+        {
+            var crypto = new Cryptographer();
+            id.Credentials = crypto.Encrypt(id.Credentials);
+            var person = this.db.GetPersonBySocialId(id);
+
+            if (person == null)
+                return this.Request.CreateErrorResponse(HttpStatusCode.NotFound, "No account found matching those credentials.");
+
+            //check role and creds
+            if (person.Role == ((int)PersonRole.Banned))
+                return this.Request.CreateErrorResponse(HttpStatusCode.Forbidden, "This account has been banned.");
+
+            var foundId = person.Identities.FirstOrDefault(i => i.PlatformUserId == id.PlatformUserId);
+            if (foundId.Credentials != id.Credentials)
+                return this.Request.CreateErrorResponse(HttpStatusCode.Unauthorized, "No account found matching those credentials.");
+
+            var token = crypto.CreateToken(person.Id, person.Username, person.Role);
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, token);
+        }
 
         /// <summary>
         /// GET api/register/check/{username}
