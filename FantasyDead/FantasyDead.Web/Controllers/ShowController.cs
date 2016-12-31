@@ -1,5 +1,6 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
+    using App_Start;
     using Data;
     using Data.Documents;
     using System;
@@ -13,6 +14,7 @@
     /// <summary>
     /// Controller responsible for configuration the shows, seasons, and episodes. (Episode CRUD)
     /// </summary>
+    [ApiAuthorization(requiredRole: (int) PersonRole.Admin)]
     public class ShowController : BaseApiController
     {
         private readonly DataContext db;
@@ -33,9 +35,6 @@
         [Route("api/show")]
         public async Task<HttpResponseMessage> UpsertShow([FromBody] Show show)
         {
-            if (this.Requestor.Role != PersonRole.Admin)
-                return this.SpitForbidden();
-
             if (show == null)
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You cannot submit nothing to be a show.");
 
@@ -58,8 +57,6 @@
         [Route("api/show/season")]
         public async Task<HttpResponseMessage> UpsertSeason([FromBody]Season season)
         {
-            if (this.Requestor.Role != PersonRole.Admin)
-                return this.SpitForbidden();
 
             if (season == null || string.IsNullOrWhiteSpace(season.ShowId))
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Season is null or show id is invalid.");
@@ -78,9 +75,6 @@
         [Route("api/show/season/episode")]
         public async Task<HttpResponseMessage> UpsertEpisode([FromBody]Episode episode)
         {
-            if (this.Requestor.Role != PersonRole.Admin)
-                return this.SpitForbidden();
-
             if (episode == null || string.IsNullOrWhiteSpace(episode.ShowId) || string.IsNullOrWhiteSpace(episode.SeasonId))
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Episode is null or missing show/season data.");
 

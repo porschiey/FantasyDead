@@ -1,10 +1,9 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
+    using App_Start;
     using Data;
     using Data.Documents;
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Web.Http;
@@ -12,6 +11,7 @@
     /// <summary>
     /// Controller responsible for handling character administrative actions. (Character CRUD)
     /// </summary>
+    [ApiAuthorization(requiredRole: (int)PersonRole.Admin)]
     public class CharacterController : BaseApiController
     {
         private readonly DataContext db;
@@ -34,8 +34,6 @@
         [Route("api/character")]
         public HttpResponseMessage CreateOrUpdate([FromBody] Character character)
         {
-            if (this.Requestor.Role != PersonRole.Admin)
-                return this.SpitForbidden();
 
             if (string.IsNullOrWhiteSpace(character.Id))
                 character.RowKey = Guid.NewGuid().ToString();

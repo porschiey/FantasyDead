@@ -19,10 +19,12 @@
     public class ApiAuthorization : Attribute, IAuthenticationFilter
     {
         private readonly TelemetryClient telemetry;
+        private readonly int requiredRole;
 
-        public ApiAuthorization()
+        public ApiAuthorization(int requiredRole = 0)
         {
             this.telemetry = new TelemetryClient();
+            this.requiredRole = requiredRole;
         }
 
         public bool AllowMultiple => false;
@@ -57,6 +59,12 @@
                 return;
             }
 
+            if (this.requiredRole < latchKey.Role)
+            {
+                context.ErrorResult = new AuthenticationFailureResult("You have insufficient privledges.", context.Request, HttpStatusCode.Forbidden);
+                return;
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, latchKey.Username),
@@ -78,11 +86,22 @@
 
     public class AuthenticationFailureResult : IHttpActionResult
     {
-        public AuthenticationFailureResult(string reasonPhrase, HttpRequestMessage request)
+
+        private HttpStatusCode responseCode;
+
+        /// <summary>
+        /// Default and only constructor.
+        /// </summary>
+        /// <param name="reasonPhrase"></param>
+        /// <param name="request"></param>
+        /// <param name="code"></param>
+        public AuthenticationFailureResult(string reasonPhrase, HttpRequestMessage request, HttpStatusCode code = HttpStatusCode.Unauthorized)
         {
-            ReasonPhrase = reasonPhrase;
-            Request = request;
+            this.ReasonPhrase = reasonPhrase;
+            this.Request = request;
+            this.responseCode = code;
         }
+
 
         public string ReasonPhrase { get; private set; }
 
