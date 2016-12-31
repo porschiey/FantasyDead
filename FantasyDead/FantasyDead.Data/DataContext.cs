@@ -98,7 +98,7 @@
 
                 await this.db.CreateDocumentAsync(this.peopleColUri, person);
 
-                return new DataContextResponse { StatusCode = HttpStatusCode.Created, Content = person };
+                return new DataContextResponse { StatusCode = HttpStatusCode.Created, Content = person.PersonId };
             }
             catch (Exception ex)
             {

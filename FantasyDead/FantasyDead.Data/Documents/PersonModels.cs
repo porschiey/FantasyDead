@@ -40,4 +40,12 @@
     }
 
 
+    public enum PersonRole
+    {
+        Banned = -1,
+        Member = 0,
+        Moderator = 1,
+        Admin = 2
+    }
+
 }
