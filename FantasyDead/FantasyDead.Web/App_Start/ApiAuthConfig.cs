@@ -50,6 +50,13 @@
                 return;
             }
 
+            if (latchKey.Expiration < DateTime.UtcNow)
+            {
+                //expired token
+                context.ErrorResult = new AuthenticationFailureResult("Your login has expired. Please login again.", context.Request);
+                return;
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, latchKey.Username),
