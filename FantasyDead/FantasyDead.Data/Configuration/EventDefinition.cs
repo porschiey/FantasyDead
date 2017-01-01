@@ -19,7 +19,6 @@
         public EventDefinition()
         {
             this.PartitionKey = Pkey;
-            this.RowKey = Guid.NewGuid().ToString();
         }
 
         public string Id => this.RowKey;

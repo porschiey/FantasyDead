@@ -42,9 +42,17 @@
             var eventDefinitions = this.db.FetchEventDefinitions().Content as List<EventDefinition>;
             var eventModifiers = this.db.FetchEventModifiers().Content as List<EventModifier>;
 
-            var thisChar = (this.db.FetchCharacters(ev.ShowId).Content as List<Character>).First(c => c.Id == ev.CharacterId);
-            var thisDef = eventDefinitions.First(d => d.Id == ev.ActionId);
-            var thisMod = string.IsNullOrWhiteSpace(ev.ModifierId) ? null : eventModifiers.First(m => m.Id == ev.ModifierId);
+            var thisChar = (this.db.FetchCharacters(ev.ShowId).Content as List<Character>).FirstOrDefault(c => c.Id == ev.CharacterId);
+            var thisDef = eventDefinitions.FirstOrDefault(d => d.Id == ev.ActionId);
+            var thisMod = string.IsNullOrWhiteSpace(ev.ModifierId) ? null : eventModifiers.FirstOrDefault(m => m.Id == ev.ModifierId);
+
+            if (thisChar == null || thisDef == null)
+            {
+                //likely an event where the character/definition no longer exists, and thus should not be calculated.
+                ev.Description = "The event related to this character is no longer valid.";
+                ev.Points = 0; 
+                return ev; //return event as is.
+            }
 
             ev.Points = thisDef.PointValue;
 

@@ -534,6 +534,23 @@
             ((MemoryCache)this.cache).Dispose(); //clear cache
         }
 
+        /// <summary>
+        /// Removes a configuration item from the database. Used for Characters, event definitions, and event modifiers.
+        /// WARNING: If a configuration item that is used in a calculation is removed, the event related to that item will fail to calculate during a re-calculation, causing a potential
+        /// change in score.
+        /// </summary>
+        /// <param name="item"></param>
+        public void DeleteConfiguration(ITableEntity item)
+        {
+            if (item.PartitionKey != EventDefinition.Pkey && item.PartitionKey != EventModifier.Pkey && item.PartitionKey != Character.Pkey)
+                throw new ArgumentException("Invalid configuration item type", nameof(item));
+
+            var op = TableOperation.Delete(item);
+            this.configuration.Execute(op);
+
+            ((MemoryCache)this.cache).Dispose(); //clear cache
+        }
+
         #endregion
 
 
