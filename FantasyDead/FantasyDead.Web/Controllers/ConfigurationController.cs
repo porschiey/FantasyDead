@@ -1,6 +1,5 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
-{
     using Data;
     using FantasyDead.Data.Configuration;
     using System;

@@ -3,6 +3,7 @@ using System.Data;
 using System.Security.Cryptography;
 using System.IO;
 using System.Text;
+using System.Configuration;
 
 /////////// FROM STACKOVERFLOW http://stackoverflow.com/questions/165808/simple-two-way-encryption-for-c-sharp
 
@@ -10,7 +11,7 @@ public class SimpleAES
 {
     // Change these keys
     private byte[] Key = { 123, 216, 11, 19, 28, 29, 80, 49, 110, 185, 21, 169, 38, 119, 220, 205, 240, 22, 171, 149, 176, 52, 196, 29, 24, 26, 17, 218, 131, 236, 53, 209 };
-    private byte[] Vector = { 146, 64, 191, 111, 23, 3, 113, 119, 231, 121, 21, 112, 79, 32, 114, 156 };
+    private byte[] Vector;
 
 
     private ICryptoTransform EncryptorTransform, DecryptorTransform;
@@ -18,6 +19,10 @@ public class SimpleAES
 
     public SimpleAES()
     {
+
+        var vStr = ConfigurationManager.AppSettings["aesV"];
+        this.Vector = Convert.FromBase64String(vStr);
+
         //This is our encryption method
         RijndaelManaged rm = new RijndaelManaged();
 
