@@ -30,6 +30,10 @@
             }
 
             var ticks = (string)reader.Value;
+
+            if (Convert.ToInt64(ticks) < 0)
+                return DateTime.MinValue;
+
             return new DateTime(Convert.ToInt64(ticks));
         }
 

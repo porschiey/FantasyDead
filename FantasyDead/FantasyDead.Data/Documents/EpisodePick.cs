@@ -15,7 +15,7 @@ namespace FantasyDead.Data.Documents
     /// </summary>
     public class EpisodePick
     {
-
+        [JsonProperty(PropertyName = "id")]
         public string Id
         {
             get

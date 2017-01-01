@@ -39,6 +39,10 @@
         public HttpResponseMessage UpsertEvent([FromBody] CharacterEvent ev)
         {
             ev = this.calc.CalculateEvent(ev); //only formulates the amount of points this event is worth
+
+            if (string.IsNullOrWhiteSpace(ev.RowKey))
+                ev.RowKey = Guid.NewGuid().ToString();
+
             this.db.AddEvent(ev);
             return this.Request.CreateResponse(HttpStatusCode.Created);
         }

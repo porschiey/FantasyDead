@@ -87,6 +87,10 @@
                 Expiration = DateTime.Parse(parts[4])
             };
 
+            Guid id;
+            if (!Guid.TryParse(bToken.PersonId, out id))
+                return null;
+
             return bToken;
         }
     }

@@ -113,7 +113,7 @@
                 //formulate list of characters that got points
                 //and calculate those character's points earned in the episode
                 var picksDictionary = new Dictionary<string, List<EpisodePick>>();
-                var characterEventDictionary = new Dictionary<string, List<CharacterEvent>>();
+                var characterEventDictionary = new Dictionary<string, List<CharacterEventIndex>>();
 
                 var deathEvents = new List<CharacterEvent>();
 
@@ -122,7 +122,7 @@
                     if (!characterEventDictionary.ContainsKey(ev.CharacterId))
                     {
                         picksDictionary.Add(ev.CharacterId, this.db.FetchPicksForCharacter(ev.CharacterId, ev.EpisodeId)); //who picked this character
-                        characterEventDictionary.Add(ev.CharacterId, new List<CharacterEvent>());
+                        characterEventDictionary.Add(ev.CharacterId, new List<CharacterEventIndex>());
                     }
                     characterEventDictionary[ev.CharacterId].Add(ev);
 

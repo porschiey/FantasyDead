@@ -118,7 +118,7 @@
 
             try
             {
-                await this.db.ReplaceDocumentAsync(this.peopleColUri, person);
+                await this.db.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(dbName, peopleCol, person.Id), person);
                 return DataContextResponse.Ok;
             }
             catch (Exception ex)
@@ -246,12 +246,29 @@
 
         #region Generic Data Contextual Info
 
+
+        /// <summary>
+        /// Retrieves the current episode that is open for selection.
+        /// </summary>
+        /// <returns>Can return null, if no episode is available.</returns>
+        public Episode FetchNextAvailableEpisode(string showId)
+        {
+            var show = (this.FetchShowData().Content as List<Show>).FirstOrDefault(s => s.Id == showId);
+            if (show == null) return null;
+
+            var today = DateTime.UtcNow;
+            var allEpisodes = show.Seasons.SelectMany(s => s.Episodes);
+
+            var nextOpen = (from ep in allEpisodes where ep.AirDate > today && ep.LockDate > today orderby ep.AirDate ascending select ep).FirstOrDefault();
+            return nextOpen;
+        }
+
         /// <summary>
         /// Fetches the current configuration of event definitions. Cached for 5 minutes; this can be overridden by setting the isCached paramater to false.
         /// </summary>
         /// <param name="isCached"></param>
         /// <returns></returns>
-        public DataContextResponse FetchEventDefinitions(bool isCached = true)
+        public DataContextResponse FetchEventDefinitions(string showId = "", bool isCached = true)
         {
             var cached = this.cache.Get(EventDefinition.Pkey);
             if (cached != null && isCached)
@@ -264,6 +281,9 @@
             var q = new TableQuery<EventDefinition>().Where(pkey);
             var results = this.configuration.ExecuteQuery(q).ToList();
 
+            if (!string.IsNullOrWhiteSpace(showId))
+                results = results.Where(eD => eD.ShowId == showId).ToList();
+
             this.cache.Set(EventDefinition.Pkey, results, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)) });
 
             return new DataContextResponse { Content = results };
@@ -275,7 +295,7 @@
         /// </summary>
         /// <param name="isCached"></param>
         /// <returns></returns>
-        public DataContextResponse FetchEventModifiers(bool isCached = true)
+        public DataContextResponse FetchEventModifiers(string showId = "", bool isCached = true)
         {
             var cached = this.cache.Get(EventModifier.Pkey);
             if (cached != null && isCached)
@@ -287,6 +307,9 @@
             var pkey = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, EventModifier.Pkey);
             var q = new TableQuery<EventModifier>().Where(pkey);
             var results = this.configuration.ExecuteQuery(q).ToList();
+            if (!string.IsNullOrWhiteSpace(showId))
+                results = results.Where(eM => eM.ShowId == showId).ToList();
+
             this.cache.Set(EventModifier.Pkey, results, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)) });
 
             return new DataContextResponse { Content = results };
@@ -383,31 +406,54 @@
         /// <returns></returns>
         public async Task<DataContextResponse> PushEpisodePick(EpisodePick pick)
         {
-            //check episodes, can't add pick for an episode that's locked.
+            ////// holy validation batman
+
+            var allPicks = this.GetEpisodePicks(pick.PersonId).Content as List<EpisodePick>;
+            var currentPicks = allPicks.Where(pk => pk.EpisodeId == pick.EpisodeId);
+
+            if (currentPicks.Any(c => c.CharacterId == pick.CharacterId))
+                return DataContextResponse.Error(HttpStatusCode.Conflict, $"You already have this character slotted elsewhere.");
+
+            var classic = currentPicks.Where(p => p.SlotType == (int)SlotType.Classic).ToList();
+            var death = currentPicks.Where(p => p.SlotType == (int)SlotType.Death).ToList();
+
+            if (pick.SlotType == (int)SlotType.Death)
+            {
+                var limit = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
+                if (death.Count >= limit)
+                    return DataContextResponse.Error(HttpStatusCode.Conflict, $"You cannot slot more than {limit} character(s) in the death slot for this episode.");
+
+                //if (death.FirstOrDefault()?.CharacterId == pick.CharacterId)
+                //    return DataContextResponse.Error(HttpStatusCode.Conflict, $"You already have this character slotted elsewhere.");
+            }
+            else if (pick.SlotType == (int)SlotType.Classic)
+            {
+                var limit = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
+                if (classic.Count >= limit)
+                    return DataContextResponse.Error(HttpStatusCode.Conflict, $"You cannot slot more than {limit} character(s) per episode.");
+            }
 
 
+            var usageLimit = Convert.ToInt32(ConfigurationManager.AppSettings["characterUsageLimit"]);
+            if (allPicks.Count(pk => pk.CharacterId == pick.CharacterId) == usageLimit)
+                return DataContextResponse.Error(HttpStatusCode.Conflict, $"You cannot slot this character any more. You've already slotted them {usageLimit} times.");
+
+            ////// END VALIDATION
 
             try
             {
-                var doc = await this.db.ReadDocumentAsync(UriFactory.CreateDocumentUri(dbName, picksCol, pick.Id));
+                var doc = await this.db.CreateDocumentAsync(picksColUri, pick);
+                return DataContextResponse.Ok;
             }
             catch (DocumentClientException dce)
             {
-                if (dce.StatusCode == HttpStatusCode.NotFound)
-                {
-                    await this.db.CreateDocumentAsync(picksCol, pick);
-                    return DataContextResponse.Ok;
-                }
-
                 this.telemtry.TrackException(dce);
                 return DataContextResponse.Error((HttpStatusCode)dce.StatusCode, dce.Message);
             }
-
-            return DataContextResponse.Error(HttpStatusCode.InternalServerError, "Could not push your episode pick. Try again later.");
         }
 
         /// <summary>
-        /// Retrieves all episode picks for a current person.
+        /// Retrieves all episode picks for a current person for a given episode.
         /// </summary>
         /// <param name="personId"></param>
         /// <param name="episodeId"></param>
@@ -419,6 +465,20 @@
 
             return new DataContextResponse { Content = result };
         }
+
+        /// <summary>
+        /// Retrieves all episode picks for a current person.
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public DataContextResponse GetEpisodePicks(string personId)
+        {
+            var picks = from pk in this.db.CreateDocumentQuery<EpisodePick>(picksColUri) where pk.PersonId == personId select pk;
+            var result = picks.ToList();
+
+            return new DataContextResponse { Content = result };
+        }
+
 
         #endregion
 
@@ -578,7 +638,8 @@
                 Notes = ev.Notes,
                 Points = ev.Points,
                 EpisodeTimestamp = ev.EpisodeTimestamp,
-                ShowId = ev.ShowId
+                ShowId = ev.ShowId,
+                Description = ev.Description,                
             };
             var op2 = TableOperation.InsertOrReplace(episodeIndex);
             this.events.Execute(op2);
@@ -618,9 +679,9 @@
         /// </summary>
         /// <param name="episodeId"></param>
         /// <returns></returns>
-        public List<CharacterEvent> FetchEventsForEpisode(string episodeId)
+        public List<CharacterEventIndex> FetchEventsForEpisode(string episodeId)
         {
-            return this.FetchEventsByPkey(episodeId);
+            return this.FetchEventsByPkeyIndex(episodeId);
         }
 
         /// <summary>
@@ -651,6 +712,13 @@
         {
             var pkeyF = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, pkey);
             var q = new TableQuery<CharacterEvent>().Where(pkeyF);
+            return this.events.ExecuteQuery(q).ToList();
+        }
+
+        private List<CharacterEventIndex> FetchEventsByPkeyIndex(string pkey)
+        {
+            var pkeyF = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, pkey);
+            var q = new TableQuery<CharacterEventIndex>().Where(pkeyF);
             return this.events.ExecuteQuery(q).ToList();
         }
 

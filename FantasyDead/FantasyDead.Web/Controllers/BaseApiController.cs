@@ -39,9 +39,6 @@
         /// <returns></returns>
         public HttpResponseMessage ConvertDbResponse(DataContextResponse response)
         {
-            if (response.Content != null)
-                throw new ArgumentException("Response is not empty and could not be handled.");
-
             var codeInt = (int)response.StatusCode;
             return (codeInt > 199 && codeInt < 300) ? this.Request.CreateResponse(response.StatusCode, response.Content) : this.Request.CreateErrorResponse(response.StatusCode, response.Message);
         }

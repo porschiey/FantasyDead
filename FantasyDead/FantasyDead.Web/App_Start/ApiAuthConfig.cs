@@ -59,7 +59,7 @@
                 return;
             }
 
-            if (this.requiredRole < latchKey.Role)
+            if (this.requiredRole > latchKey.Role)
             {
                 context.ErrorResult = new AuthenticationFailureResult("You have insufficient privledges.", context.Request, HttpStatusCode.Forbidden);
                 return;

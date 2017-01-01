@@ -33,6 +33,8 @@
 
         public int CategoryInt { get; set; }        
 
+        public string ShowId { get; set; }
+
         /// <summary>
         /// Category for the action.
         /// </summary>

@@ -14,10 +14,11 @@
         public EventModifier()
         {
             this.PartitionKey = Pkey;
-            this.RowKey = Guid.NewGuid().ToString();
         }
 
         public string Id => this.RowKey;
+
+        public string ShowId { get; set; }
 
         public string Name { get; set; }
 
