@@ -130,6 +130,33 @@
         }
 
         /// <summary>
+        /// Adds a subset of events to a person.
+        /// </summary>
+        /// <param name="events"></param>
+        /// <param name="personId"></param>
+        public async void AddEventsToPerson(List<CharacterEvent> events, string personId)
+        {
+            var person = this.GetPerson(personId);
+            person.Events.AddRange(events);
+            person.TotalScore = person.Events.Sum(e => e.Points);
+            await this.UpdatePerson(person);
+        }
+
+        /// <summary>
+        /// Removes a events from the person that were related to specific episode.
+        /// </summary>
+        /// <param name="fromEpisodeId"></param>
+        /// <param name="personId"></param>
+        public async void RevokeEventsFromPerson(string fromEpisodeId, string personId)
+        {
+            var person = this.GetPerson(personId);
+            person.Events = person.Events.Where(e => e.EpisodeId != fromEpisodeId).ToList();
+            person.TotalScore = person.Events.Sum(e => e.Points);
+            await this.UpdatePerson(person);
+        }
+
+
+        /// <summary>
         /// Bans a person(user) from the app.
         /// </summary>
         /// <param name="personId"></param>
@@ -147,14 +174,14 @@
         /// </summary>
         /// <param name="personId"></param>
         /// <returns></returns>
-        public Person GetPerson(string personId)
+        public Person GetPerson(string personId, bool isCached = true)
         {
             if (string.IsNullOrWhiteSpace(personId))
                 return null;
 
             var key = personId;
             var cachedPerson = this.cache.Get(key);
-            if (cachedPerson != null)
+            if (cachedPerson != null && isCached)
                 return cachedPerson as Person;
 
             var person = from p in this.db.CreateDocumentQuery<Person>(this.peopleColUri) where p.Id == personId select p;
@@ -314,7 +341,7 @@
         /// <param name="characterId"></param>
         /// <param name="episodeId"></param>
         /// <returns></returns>
-        internal List<EpisodePick> FetchPicksForCharacter(string characterId, string episodeId)
+        public List<EpisodePick> FetchPicksForCharacter(string characterId, string episodeId)
         {
             var picks = from pk in this.db.CreateDocumentQuery<EpisodePick>(picksColUri) where pk.EpisodeId == episodeId && pk.CharacterId == characterId select pk;
             var result = picks.ToList();

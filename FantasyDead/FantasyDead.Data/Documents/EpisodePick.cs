@@ -44,4 +44,13 @@ namespace FantasyDead.Data.Documents
         [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime SlottedDate { get; set; }
     }
+
+
+    public enum SlotType
+    {
+
+        Classic = 0,
+
+        Death = 1
+    }
 }

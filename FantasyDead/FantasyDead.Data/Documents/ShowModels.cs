@@ -51,5 +51,10 @@
         [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime LockDate { get; set; }
 
+        public bool Calculated { get; set; }
+
+        [JsonConverter(typeof(DateTimeConvertor))]
+        public DateTime CalculationDate { get; set; }
+
     }
 }

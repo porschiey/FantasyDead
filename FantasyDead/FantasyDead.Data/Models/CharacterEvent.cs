@@ -9,6 +9,7 @@
     /// </summary>
     public class CharacterEvent : TableEntity
     {
+        public string Description { get; set; }
 
         public string EpisodeId { get; set; }
 
@@ -27,6 +28,27 @@
         public string ModifierId { get; set; }
 
         public string Notes { get; set; }
+
+        public bool DeathEvent { get; set; }
+
+
+        public static CharacterEvent Copy(CharacterEvent og)
+        {
+            return new CharacterEvent
+            {
+                ActionId = og.ActionId,
+                PartitionKey = og.CharacterId,
+                RowKey = og.RowKey,
+                Points = og.Points,
+                Description = og.Description,
+                DeathEvent = og.DeathEvent,
+                EpisodeTimestamp = og.EpisodeTimestamp,
+                EpisodeId = og.EpisodeId,
+                Notes = og.Notes,
+                ShowId = og.ShowId,
+                ModifierId = og.ModifierId
+            };
+        }
     }
 
 

@@ -38,7 +38,6 @@
         [Route("api/event")]
         public HttpResponseMessage UpsertEvent([FromBody] CharacterEvent ev)
         {
-
             ev = this.calc.CalculateEvent(ev); //only formulates the amount of points this event is worth
             this.db.AddEvent(ev);
             return this.Request.CreateResponse(HttpStatusCode.Created);
@@ -70,11 +69,10 @@
         [Route("api/event/calculate/{episodeId}")]
         public HttpResponseMessage Calculate(string episodeId)
         {
-
             var showData = this.db.FetchShowData().Content as List<Show>;
-            var thisShow = showData.First(s => s.Seasons.Any(se => se.Episodes.Any(e => e.Id == episodeId)));
+            var episode = showData.SelectMany(s => s.Seasons.SelectMany(se => se.Episodes)).First(e=>e.Id == episodeId);
 
-            this.calc.StartEpisodeCalculation(episodeId, thisShow.Id);
+            this.calc.StartEpisodeCalculation(episode);
             return this.Request.CreateResponse(HttpStatusCode.OK);
         }
 

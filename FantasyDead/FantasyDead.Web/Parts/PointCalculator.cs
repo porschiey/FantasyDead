@@ -2,8 +2,10 @@
 {
     using Data;
     using Data.Configuration;
+    using Data.Documents;
     using Data.Models;
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -25,13 +27,13 @@
         /// Spawns a task that is responsible for calculting all the points for a given episode and rewarding points.
         /// </summary>
         /// <param name="episodeId"></param>
-        public void StartEpisodeCalculation(string episodeId, string showId)
+        public void StartEpisodeCalculation(Episode episode)
         {
-            Task.Run(this.CalculateEpisode(episodeId, showId));
+            Task.Run(this.CalculateEpisode(episode));
         }
 
         /// <summary>
-        /// Calculates the number of points this event is worth to the character.
+        /// Calculates the number of points this event is worth to the character. This also populates the description value for the event.
         /// </summary>
         /// <param name="ev"></param>
         /// <returns></returns>
@@ -40,15 +42,47 @@
             var eventDefinitions = this.db.FetchEventDefinitions().Content as List<EventDefinition>;
             var eventModifiers = this.db.FetchEventModifiers().Content as List<EventModifier>;
 
+            var thisChar = (this.db.FetchCharacters(ev.ShowId).Content as List<Character>).First(c => c.Id == ev.CharacterId);
             var thisDef = eventDefinitions.First(d => d.Id == ev.ActionId);
             var thisMod = string.IsNullOrWhiteSpace(ev.ModifierId) ? null : eventModifiers.First(m => m.Id == ev.ModifierId);
 
             ev.Points = thisDef.PointValue;
 
-            if (thisMod == null)
-                return ev;
+            ev.Description = $"{thisChar.Name} - {thisDef.Name} for {ev.Points}";
 
+            if (thisMod != null)
+            {
+                //note: this switch case and subsequent enum really isn't necessary to peform modification math, as the value itself can be applied straight to the core value. 
+                //The enum exists for ease of the UI's display modes. 
 
+                switch (thisMod.Type)
+                {
+                    case ModificationType.Add:
+                        {
+                            ev.Points += thisMod.ModificationValue;
+                            ev.Description += $", plus {thisMod.ModificationValue} points w/ mod {thisMod.Name}.";
+                            break;
+                        }
+                    case ModificationType.Subtract:
+                        {
+                            ev.Points -= thisMod.ModificationValue;
+                            ev.Description += $", minus {thisMod.ModificationValue} points w/ mod {thisMod.Name}.";
+                            break;
+                        }
+                    case ModificationType.Percentage:
+                        {
+                            ev.Points *= thisMod.ModificationValue;
+                            ev.Description += $", plus {Math.Round((1 - thisMod.ModificationValue) * 100, 1)}% more points w/ mod {thisMod.Name}.";
+                            break;
+                        }
+                    default:
+                        throw new NotSupportedException("Unknown modification type");
+                }
+            }
+
+            ev.Description += $". Total points attributed: {ev.Points}";
+
+            return ev;
         }
 
         /// <summary>
@@ -56,30 +90,85 @@
         /// </summary>
         /// <param name="episodeId"></param>
         /// <returns></returns>
-        public Action CalculateEpisode(string episodeId, string showId)
+        public Action CalculateEpisode(Episode episode)
         {
             return new Action(() =>
             {
-                var epId = episodeId; //re-assigning scope-locally for no amazing reason other than sanity
+                var epId = episode.Id; //re-assigning scope-locally for no amazing reason other than sanity
 
                 //fetch event definition data
-                var allCharacters = this.db.FetchCharacters(showId);
+                var allCharacters = this.db.FetchCharacters(episode.ShowId);
 
                 //fetch all events for episode
-                var events = this.db.FetchEventsForEpisode(episodeId);
+                var events = this.db.FetchEventsForEpisode(epId);
 
                 //formulate list of characters that got points
+                //and calculate those character's points earned in the episode
+                var picksDictionary = new Dictionary<string, List<EpisodePick>>();
+                var characterEventDictionary = new Dictionary<string, List<CharacterEvent>>();
+
+                var deathEvents = new List<CharacterEvent>();
+
+                foreach (var ev in events)
+                {
+                    if (!characterEventDictionary.ContainsKey(ev.CharacterId))
+                    {
+                        picksDictionary.Add(ev.CharacterId, this.db.FetchPicksForCharacter(ev.CharacterId, ev.EpisodeId)); //who picked this character
+                        characterEventDictionary.Add(ev.CharacterId, new List<CharacterEvent>());
+                    }
+                    characterEventDictionary[ev.CharacterId].Add(ev);
+
+                    if (ev.DeathEvent)
+                        deathEvents.Add(ev);
+                }
+
                 var affectedCharacters = events.Select(e => e.CharacterId).Distinct().ToList();
-
-                //calculate those character's points earned in the episode
-
-                //discover who selected those characters
                 //reward points to users  
 
-                //discover who slotted characters that died
-                //reward points to users  
+                var users = new ConcurrentDictionary<string, List<CharacterEvent>>();
 
+                Parallel.ForEach(picksDictionary, (picks) =>
+                {
+                    var characterId = picks.Key;
+                    var characterEventsThisEpisode = characterEventDictionary[characterId];
 
+                    foreach (var slot in picks.Value)
+                    {
+
+                        var personId = slot.PersonId;
+                        if (!users.ContainsKey(personId))
+                        {
+                            users.GetOrAdd(personId, new List<CharacterEvent>());
+
+                            if (episode.Calculated)
+                            {
+                                //this episode has already been calculated, but clearly a request has come in to re-calculate.
+                                //thus, we've got to revoke previous events already calculated to start over
+                                this.db.RevokeEventsFromPerson(epId, personId);
+                            }
+                        }
+
+                        if (slot.SlotType == (int)SlotType.Death && characterEventsThisEpisode.Any(e => e.DeathEvent)) //is this a death slot, and did the character die?
+                        {
+                            var deathEvent = characterEventsThisEpisode.First(e => e.DeathEvent);
+                            var bonus = CharacterEvent.Copy(deathEvent);
+                            bonus.Points = 100;
+                            bonus.Description = "Bonus points were awarded because this character was slotted to die.";
+                            users[personId].Add(bonus);
+                            continue; // don't do normal additive since it's a death slot
+                        }
+                        users[personId].AddRange(characterEventsThisEpisode); //add character events to that user                        
+                    }
+                });
+
+                Parallel.ForEach(users, (u) =>
+                {
+                    this.db.AddEventsToPerson(u.Value, u.Key); //this also tallies all the person's events to generate total score
+                });
+
+                episode.Calculated = true;
+                episode.CalculationDate = DateTime.UtcNow;
+                this.db.UpsertEpisode(episode).Wait();
             });
         }
     }
