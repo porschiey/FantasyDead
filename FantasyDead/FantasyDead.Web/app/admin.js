@@ -1,6 +1,6 @@
 ﻿(function () {
 
-    var app = angular.module('admin', ['ngRoute']);
+    var app = angular.module('admin', ['ngRoute', 'ui.bootstrap.datetimepicker']);
 
     app.config(['$routeProvider', function ($routeProvider) {
 
@@ -95,16 +95,9 @@
             $location.path('/login');
         };
 
-
-        $rootScope.readDate = function (ticks) {
-            var tks = parseFloat(ticks);
-            var ticksToMicrotime = ticks / 10000;
-            //ticks are recorded from 1/1/1; get microtime difference from 1/1/1/ to 1/1/1970
-            var epochMicrotimeDiff = 2208988800000;
-            //new date is ticks, converted to microtime, minus difference from epoch microtime
-            var tickDate = new Date(ticksToMicrotime - epochMicrotimeDiff)
-            return tickDate;
-        };
+        //$rootScope.readDate = function (dateStr) {
+        //    return new Date(dateStr);
+        //}
     }]);
 
 
@@ -130,6 +123,33 @@
 
         $scope.ready = false;
         $scope.init();
+
+
+        $scope.editEpisode = function (ep, showId, seasonId) {
+
+            if (!ep)
+                ep = {
+                    ShowId: showId,
+                    SeasonId: seasonId
+                };
+
+            $scope.eEp = ep;
+            $('#editEp').modal();
+        };
+
+        $scope.saving = false;
+        $scope.saveEpisode = function () {
+
+            $scope.saving = true;
+            $http.put('api/show/season/episode', $scope.eEp).then(function (response) {
+                $('#editEp').modal('hide');
+                $scope.init();
+            }).catch(function (error) {
+                $scope.saving = false;
+                $('#editEp').modal('hide');
+                $rootScope.handleHttpError(error);
+            });
+        };
     }]);
 
 

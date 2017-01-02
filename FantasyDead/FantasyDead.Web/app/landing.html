@@ -1,4 +1,76 @@
-﻿<div class="row kill-margin">
+﻿<div class="modal fade" tabindex="-1" role="dialog" id="editEp">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add/Edit Episode</h4>
+            </div>
+            <div class="modal-body">
+
+                <table class="table table-striped">
+                    <tr>
+                        <td>
+                            Episode Name
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" ng-model="eEp.Name" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Air Date/Time
+                        </td>
+                        <td>
+
+                            <div class="dropdown">
+                                <a class="dropdown-toggle" id="airDateDd" role="button" data-toggle="dropdown" data-target="#">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" data-ng-model="eEp.AirDate"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                                    <datetimepicker data-ng-model="eEp.AirDate" data-datetimepicker-config="{ dropdownSelector: '#airDateDd' }" />
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Rosters lock
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <a class="dropdown-toggle" id="lockDateD" role="button" data-toggle="dropdown" data-target="#">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" data-ng-model="eEp.LockDate"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                                    <datetimepicker data-ng-model="eEp.LockDate" data-datetimepicker-config="{ dropdownSelector: '#lockDateD' }" />
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <div ng-show="!saving">
+                    <button type="button" class="btn btn-default" style="float: left;" ng-show="eEp.id">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveEpisode()">Save changes</button>
+                </div>
+                <div ng-show="saving">
+                    <i class="fa fa-spin fa-circle-o-notch"></i> Working...
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="row kill-margin">
     <div class="container">
         <br />
         <h4>Welcome back, {{user.Username}}. </h4>
@@ -7,6 +79,7 @@
             <i class="fa fa-spin fa-circle-o-notch"></i>
         </div>
         <div ng-show="ready">
+
             <div ng-repeat="show in shows" class="panel panel-default">
                 <div class="panel-body">
                     <h3>{{show.Name}}</h3>
@@ -17,14 +90,16 @@
                                     <h4>{{season.Name}}</h4>
                                 </a>
 
-                                <div class="panel panel-default" ng-show="season.showing">
+                                <div ng-show="season.showing">
+                                    <a ng-click="editEpisode(undefined, season.ShowId, season.id)"><i class="fa fa-plus"></i> Add an Episode</a>
+
                                     <table class="table table-striped">
                                         <tr ng-repeat="ep in season.Episodes | orderBy: 'AirDate'">
                                             <td>
                                                 {{ep.Name}}
                                             </td>
                                             <td>
-                                                <i class="fa fa-tv"></i> {{readDate(ep.AirDate) | date}}
+                                                <i class="fa fa-tv"></i> {{ep.AirDate | date}}
                                             </td>
                                             <td>
                                                 <i class="fa fa-lock"></i> {{ep.LockDate | date}}
@@ -33,7 +108,7 @@
                                                 {{ ep.Calculated ? 'Calculated' : 'Not Calculated'}}
                                             </td>
                                             <td>
-                                                <a ng-click="editEpisode(ep)">
+                                                <a ng-click="editEpisode(ep, season.ShowId, season.id)">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </td>

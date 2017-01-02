@@ -16,21 +16,28 @@
             if (reader.TokenType == JsonToken.None || reader.TokenType == JsonToken.Null)
                 return null;
 
-            if (reader.TokenType != JsonToken.String)
+            if (reader.TokenType != JsonToken.String && reader.TokenType != JsonToken.Date)
             {
                 throw new Exception(
-                    String.Format("Unexpected token parsing date. Expected String, got {0}.",
+                    String.Format("Unexpected token parsing date. Expected String or Date, got {0}.",
                     reader.TokenType));
             }
+
+            if (reader.ValueType == typeof(DateTime))
+                return reader.Value;
 
             DateTime parsed;
             if (DateTime.TryParse((string)reader.Value, out parsed)) //try normal parsing first
             {
                 return parsed;
             }
+            else if (reader.TokenType == JsonToken.String && string.IsNullOrWhiteSpace((string)reader.Value))
+            {
+                return DateTime.MinValue;
+            }
             else
             {
-                //try ticks
+                //try ticks (legacy)
                 try
                 {
                     var ticks = Convert.ToInt64(reader.Value);

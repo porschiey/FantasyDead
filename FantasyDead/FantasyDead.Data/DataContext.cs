@@ -493,11 +493,13 @@
                 if (showData.Any(s => s.Id == show.Id))
                 {
                     await this.db.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(dbName, showsCol, show.Id), show);
+                    ((MemoryCache)this.cache).Dispose(); //clear cache
                     return DataContextResponse.Ok;
                 }
                 else
                 {
                     await this.db.CreateDocumentAsync(this.showColUri, show); //create it
+                    ((MemoryCache)this.cache).Dispose(); //clear cache
                     return DataContextResponse.Ok;
                 }
             }
@@ -506,6 +508,7 @@
                 this.telemtry.TrackException(dce);
                 return DataContextResponse.Error((HttpStatusCode)dce.StatusCode, dce.Message);
             }
+
         }
 
         /// <summary>
@@ -575,6 +578,7 @@
                 relatedSeason.Episodes[ix] = episode;
             }
 
+
             return await this.UpsertSeason(relatedSeason);
         }
 
@@ -639,7 +643,7 @@
                 Points = ev.Points,
                 EpisodeTimestamp = ev.EpisodeTimestamp,
                 ShowId = ev.ShowId,
-                Description = ev.Description,                
+                Description = ev.Description,
             };
             var op2 = TableOperation.InsertOrReplace(episodeIndex);
             this.events.Execute(op2);
