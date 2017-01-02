@@ -1,0 +1,50 @@
+﻿<div class="row kill-margin">
+    <div class="container">
+        <br />
+        <h4>Welcome back, {{user.Username}}. </h4>
+        <br />
+        <div ng-show="!ready">
+            <i class="fa fa-spin fa-circle-o-notch"></i>
+        </div>
+        <div ng-show="ready">
+            <div ng-repeat="show in shows" class="panel panel-default">
+                <div class="panel-body">
+                    <h3>{{show.Name}}</h3>
+                    <table class="table">
+                        <tr ng-repeat="season in show.Seasons">
+                            <td>
+                                <a ng-click="season.showing = !season.showing">
+                                    <h4>{{season.Name}}</h4>
+                                </a>
+
+                                <div class="panel panel-default" ng-show="season.showing">
+                                    <table class="table table-striped">
+                                        <tr ng-repeat="ep in season.Episodes | orderBy: 'AirDate'">
+                                            <td>
+                                                {{ep.Name}}
+                                            </td>
+                                            <td>
+                                                <i class="fa fa-tv"></i> {{readDate(ep.AirDate) | date}}
+                                            </td>
+                                            <td>
+                                                <i class="fa fa-lock"></i> {{ep.LockDate | date}}
+                                            </td>
+                                            <td>
+                                                {{ ep.Calculated ? 'Calculated' : 'Not Calculated'}}
+                                            </td>
+                                            <td>
+                                                <a ng-click="editEpisode(ep)">
+                                                    <i class="fa fa-pencil"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

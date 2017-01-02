@@ -1,0 +1,27 @@
+﻿
+<br />
+<div class="row kill-margin">
+    <div class="container">
+
+
+        <div class="panel panel-default text-left" style="width: 500px;">
+         
+            <div class="panel-body">
+                <form ng-show="!working">
+                    <div class="form-group">
+                        <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email" style="width: 300px;" ng-model="id.PlatformUserId">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password" style="width: 300px;" ng-model="id.Credentials">
+                    </div>
+                    <button ng-click="signIn(id)" class="btn btn-default">Log in</button>
+                </form>
+
+                <div ng-show="working">
+                    <i class="fa fa-2x fa-spin fa-circle-o-notch"></i>&ensp; Validating...
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

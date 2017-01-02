@@ -33,7 +33,7 @@
         {
             var header = context.Request.Headers.Authorization;
 
-            if (header.Scheme != "Bearer" || string.IsNullOrWhiteSpace(header.Parameter))
+            if (header?.Scheme != "Bearer" || string.IsNullOrWhiteSpace(header.Parameter))
             {
                 context.ErrorResult = new AuthenticationFailureResult("Invalid Headers", context.Request);
                 this.telemetry.TrackTrace($"API Attempt failure, reason: 401: invalid headers", SeverityLevel.Warning);

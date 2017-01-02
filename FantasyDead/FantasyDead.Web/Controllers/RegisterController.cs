@@ -36,6 +36,9 @@
         [Route("api/register")]
         public async Task<HttpResponseMessage> Register([FromBody] RegistrationRequest req)
         {
+            if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Username))
+                return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Username and email must be provided.");
+
             var crypto = new Cryptographer();
 
             req.SocialIdentity.Credentials = crypto.Encrypt(req.SocialIdentity.Credentials);
@@ -48,10 +51,9 @@
                 Username = req.Username,
                 Events = new List<CharacterEvent>(),
                 AvatarPictureUrl = string.Empty,
-                Role = (int)PersonRole.Member
+                Role = (int)PersonRole.Member,
+                Email = req.Email
             };
-
-
 
             var response = await this.db.Register(person);
 

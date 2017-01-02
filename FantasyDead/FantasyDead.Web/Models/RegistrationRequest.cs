@@ -10,6 +10,8 @@ namespace FantasyDead.Web.Models
 
         public string Username { get; set; }
 
+        public string Email { get; set; }
+
         public SocialIdentity SocialIdentity { get; set; }
     }
 }

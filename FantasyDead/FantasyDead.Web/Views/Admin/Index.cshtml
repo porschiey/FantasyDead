@@ -1,0 +1,36 @@
+﻿
+<script type="text/javascript" src="~/Scripts/angular-route.min.js"></script>
+<script type="text/javascript" src="/app/admin.js"></script>
+
+<div ng-app="admin">
+    <div class="row sub-nav" ng-show="loggedIn" style="margin: 0;">
+
+        <ul style="list-style: none;">
+            <li>
+                <a href="#!/landing">General Configuration</a>
+            </li>
+            <li>
+                <a href="#!/characters">Characters</a>
+            </li>
+            <li>
+                <a href="#!/score">Score Episode</a>
+            </li>
+            <li>
+                <a href="#!/events">Definitions & Modifiers</a>
+            </li>
+            <li>
+                <a ng-click="signOut()">Logout</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="alert alert-danger" ng-show="errorMsg !== null">
+        <span style="float: right">
+            <a ng-click="closeError()"><i class="fa fa-close"></i></a>
+        </span>
+        {{errorMsg}}
+
+    </div>
+    <div ng-view></div>
+
+</div>

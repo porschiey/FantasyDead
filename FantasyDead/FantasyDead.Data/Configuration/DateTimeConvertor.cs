@@ -28,32 +28,40 @@
             {
                 return parsed;
             }
+            else
+            {
+                //try ticks
+                try
+                {
+                    var ticks = Convert.ToInt64(reader.Value);
+                    return new DateTime(ticks);
+                }
+                catch
+                {
+                    throw new InvalidOperationException("Invalid date, cannot convert"); ;
+                }
 
-            var ticks = (string)reader.Value;
+            }
 
-            if (Convert.ToInt64(ticks) < 0)
-                return DateTime.MinValue;
-
-            return new DateTime(Convert.ToInt64(ticks));
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var ticks = string.Empty;
+            var isoD = string.Empty;
             if (value is DateTime)
             {
                 DateTime dt = (DateTime)value;
                 if (!dt.Equals(DateTime.MinValue))
-                    ticks = dt.Ticks.ToString();
+                    isoD = dt.ToString("O");
                 else
-                    ticks = int.MinValue.ToString();
+                    isoD = string.Empty;
             }
             else
             {
                 throw new Exception("Expected date object value.");
             }
 
-            writer.WriteValue(ticks);
+            writer.WriteValue(isoD);
         }
     }
 }

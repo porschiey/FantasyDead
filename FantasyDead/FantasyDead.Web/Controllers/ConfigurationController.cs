@@ -139,5 +139,29 @@
         {
             return this.ConvertDbResponse(this.db.FetchEventModifiers(showId));
         }
+
+        /// <summary>
+        /// GET api/configuration/shows
+        /// Lists all the basic show data.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/configuration/shows")]
+        public HttpResponseMessage FetchShowData()
+        {
+            return this.ConvertDbResponse(this.db.FetchShowData());
+        }
+
+        /// <summary>
+        /// GET api/configuration/characters/{showId}
+        /// Lists all the characters of a show.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/configuration/characters/{showId}")]
+        public HttpResponseMessage FetchCharacters(string showId)
+        {
+            return this.ConvertDbResponse(this.db.FetchCharacters(showId));
+        }
     }
 }

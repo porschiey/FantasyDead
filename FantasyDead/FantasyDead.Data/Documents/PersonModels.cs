@@ -19,12 +19,16 @@
 
         public double TotalScore { get; set; }
 
+        public string Email { get; set; }
+
         public List<SocialIdentity> Identities { get; set; }
 
         public List<CharacterEvent> Events { get; set; }
 
         [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime JoinedDate { get; set; }
+
+        public string PushNotificationData { get; set; }
 
         public int Role { get; set; } //0 = member, 1 = mod, 2 = admin, -1 = banned
     }
