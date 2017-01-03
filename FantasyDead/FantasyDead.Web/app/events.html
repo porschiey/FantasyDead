@@ -1,1 +1,261 @@
-﻿events
+﻿<div class="modal fade" tabindex="-1" role="dialog" id="editDef">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add/Edit Event Definition</h4>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped">
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" ng-model="eDef.Name" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Category
+                        </td>
+                        <td>
+                            <select ng-model="eDef.CategoryInt" ng-options="cat as cat.Name for cat in categories track by cat.id"></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Description
+                        </td>
+                        <td>
+                            <textarea class="form-control" ng-model="eDef.Description"
+                                      cols="20" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Special Rules
+                        </td>
+                        <td>
+                            <textarea class="form-control" ng-model="eDef.SpecialRules"
+                                      cols="20" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Point Value
+                        </td>
+                        <td>
+                            <input class="form-control" type="number" ng-model="eDef.PointValue" style="width: 50px;" />
+                        </td>
+                    </tr>
+
+
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <div ng-show="!saving">
+                    <button type="button" class="btn btn-default" style="float: left;" ng-show="eDef.RowKey">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveDefinition()">Save changes</button>
+                </div>
+                <div ng-show="saving">
+                    <i class="fa fa-spin fa-circle-o-notch"></i> Working...
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal fade" tabindex="-1" role="dialog" id="editMod">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add/Edit Event Modifier</h4>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped">
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" ng-model="eMod.Name" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Type
+                        </td>
+                        <td>
+                            <select ng-model="eMod.ModificationTypeInt"
+                                    ng-options="mt as mt.Name for mt in modTypes track by mt.id"
+                                    ng-change="convertToModTypeDisplay(modValueEntry, eMod)"
+                                    ></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Description
+                        </td>
+                        <td>
+                            <textarea class="form-control" ng-model="eMod.Description"
+                                      cols="20" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Special Rules
+                        </td>
+                        <td>
+                            <textarea class="form-control" ng-model="eMod.SpecialRules"
+                                      cols="20" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Modification Value
+                        </td>
+                        <td>
+                            <input class="form-control" type="number" ng-model="modValueEntry"
+                                   ng-blur="convertToModTypeDisplay(modValueEntry, eMod)"
+                                   style="width: 50px; float: left;" />
+                            <span class="help-block">&ensp; {{modValueDisplay}}</span>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <div ng-show="!saving">
+                    <button type="button" class="btn btn-default" style="float: left;" ng-show="eMod.RowKey">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveModifier()">Save changes</button>
+                </div>
+                <div ng-show="saving">
+                    <i class="fa fa-spin fa-circle-o-notch"></i> Working...
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+<div class="row kill-margin">
+    <div class="container">
+        <br />
+        <div class="panel panel-default">
+            <div class="panel-body">
+
+                <h4>Event Definitions & Modifiers</h4>
+                Select Show:
+                <select class="form-control" style="width: 200pt; display:inline-block;" ng-model="selectedShow" ng-options="show as show.Name for show in shows track by show.id" ng-change="fetchConfigurations()"></select>
+                <span ng-show="loading">
+                    <i class="fa fa-spin fa-circle-o-notch"></i>
+                </span>
+
+
+                <div ng-show="loaded">
+                    <br />
+                    <h4 style="font-weight: lighter;">Definitions</h4>
+                    <a ng-click="editDefinition()"><i class="fa fa-plus"></i> Add new definition</a>
+                    <table class="table table-striped">
+                        <tr>
+                            <th style="width: 150px;">
+                                Name
+                            </th>
+                            <th>
+                                Category
+                            </th>
+                            <th>
+                                Description
+                            </th>
+                            <th>
+                                Special Rules
+                            </th>
+                            <th style="width: 150px;">
+                                Point Value
+                            </th>
+                            <th style="width: 150px;">
+                                Options
+                            </th>
+                        </tr>
+                        <tr ng-repeat="def in definitions | orderBy: 'Name'">
+                            <td>
+                                {{def.Name}}
+                            </td>
+                            <td>
+                                {{categoryConvert(def.Category)}}
+                            </td>
+                            <td>
+                                {{def.Description}}
+                            </td>
+                            <td>
+                                {{def.SpecialRules}}
+                            </td>
+                            <td>
+                                {{def.PointValue}}
+                            </td>
+                            <td>
+                                <a ng-click="editDefinition(def)"><i class="fa fa-pencil"> </i></a>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <br /><br />
+                    <h4 style="font-weight: lighter;">Modifiers</h4>
+                    <a ng-click="editModifier()"><i class="fa fa-plus"></i> Add new Modifier</a>
+                    <table class="table table-striped">
+                        <tr>
+                            <th style="width: 150px;">
+                                Name
+                            </th>
+                            <th>
+                                Mod Type
+                            </th>
+                            <th>
+                                Description
+                            </th>
+                            <th>
+                                Special Rules
+                            </th>
+                            <th style="width: 150px;">
+                                Mod Value
+                            </th>
+                            <th style="width: 150px;">
+                                Options
+                            </th>
+                        </tr>
+                        <tr ng-repeat="mod in modifiers">
+                            <td>
+                                {{mod.Name}}
+                            </td>
+                            <td>
+                                {{typeConvert(mod.ModificationTypeInt)}}
+                            </td>
+                            <td>
+                                {{mod.Description}}
+                            </td>
+                            <td>
+                                {{mod.SpecialRules}}
+                            </td>
+                            <td>
+                                {{ modValueConvert(mod.ModificationTypeInt, mod.ModificationValue) }}
+                            </td>
+                            <td>
+                                <a ng-click="editModifier(mod)"><i class="fa fa-pencil"> </i></a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

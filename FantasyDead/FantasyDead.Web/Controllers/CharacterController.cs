@@ -36,7 +36,10 @@
         {
 
             if (string.IsNullOrWhiteSpace(character.Id))
+            {
                 character.RowKey = Guid.NewGuid().ToString();
+                character.CreatedDate = DateTime.UtcNow;
+            }
 
             this.db.UpsertConfigurationItem(character);
 
