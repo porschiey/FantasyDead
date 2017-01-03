@@ -33,6 +33,8 @@
         public int TotalScore { get; set; }
 
         public string ShowId { get; set; }
+
+        public string PrimaryImageUrl { get; set; }
     }
 
     public class CharacterDto : Character

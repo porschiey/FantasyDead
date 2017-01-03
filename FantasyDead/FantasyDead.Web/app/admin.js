@@ -2,6 +2,23 @@
 
     var app = angular.module('admin', ['ngRoute', 'ui.bootstrap.datetimepicker']);
 
+    app.directive('fileModel', ['$parse', function ($parse) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                var model = $parse(attrs.fileModel);
+                var modelSetter = model.assign;
+
+                element.bind('change', function () {
+                    scope.$apply(function () {
+                        modelSetter(scope, element[0].files[0]);
+                    });
+                });
+            }
+        };
+    }]);
+
+
     app.config(['$routeProvider', function ($routeProvider) {
 
 
@@ -95,130 +112,204 @@
             $location.path('/login');
         };
 
-        //$rootScope.readDate = function (dateStr) {
-        //    return new Date(dateStr);
-        //}
-    }]);
-
-
-    app.controller('charactersController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
-
-    }]);
-
-
-
-    app.controller('eventsController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
-
-    }]);
-
-
-    app.controller('landingController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
-
-        $scope.init = function () {
-            $http.get('api/configuration/shows').then(function (response) {
-                $scope.shows = response.data;
-                $scope.ready = true;
-            }).catch($rootScope.handleHttpError);
-        };
-
-        $scope.ready = false;
-        $scope.init();
-
-
-        $scope.editEpisode = function (ep, showId, seasonId) {
-
-            if (!ep)
-                ep = {
-                    ShowId: showId,
-                    SeasonId: seasonId
-                };
-
-            $scope.eEp = ep;
-            $('#editEp').modal();
-        };
-
-        $scope.saving = false;
-        $scope.saveEpisode = function () {
-
-            $scope.saving = true;
-            $http.put('api/show/season/episode', $scope.eEp).then(function (response) {
-                $('#editEp').modal('hide');
-                $scope.init();
-            }).catch(function (error) {
-                $scope.saving = false;
-                $('#editEp').modal('hide');
-                $rootScope.handleHttpError(error);
-            });
-        };
-    }]);
-
-
-    app.controller('scoreController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
-
-    }]);
-
-    ///////////// LOGIN
-    app.controller('loginController', ['$scope', '$rootScope', '$http', '$location', function ($scope, $rootScope, $http, $location) {
-
-        $scope.id = {};
-        $scope.working = false;
-        $scope.signIn = function (id) {
-            $scope.working = true;
-            if (id.Credentials === '' || id.PlatformUserId === '') {
-                $rootScope.handleError('Email / Password cannot be blank.');
-                $scope.working = false;
-                return;
+        $rootScope.shows = [];
+        $rootScope.fetchShowData = function (contWith) {
+            if ($rootScope.loggedIn) {
+                $http.get('api/configuration/shows').then(function (response) {
+                    $rootScope.shows = response.data;
+                }).catch($rootScope.handleHttpError);
             }
 
-            id.Credentials = btoa(id.Credentials);
-            id.PlatformName = 'Custom';
+            if (typeof (contWith) === 'function')
+                contWith();
+        };
+        $rootScope.fetchShowData();
 
-            $http.put('/api/register/login', id).then(function (response) {
 
-                var token = response.data;
-                $http.defaults.headers.common.Authorization = 'Bearer ' + token;
+        $rootScope.uploadImage = function (file, folder, contWith) {
+            var uploadUrl = 'api/configuration/image/' + folder;
+            var fd = new FormData();
+            fd.append('file', file);
+            $http.post(uploadUrl, fd, {
+                transformRequest: angular.identity,
+                headers: { 'Content-Type': undefined }
+            }).then(function(response){
 
-                $http.get('api/person').then(function (pResponse) {
+                //TODO START HERE
+                if (typeof contWith === 'function')
+                    contWith();
+            });
+        };
 
-                    $rootScope.user = pResponse.data;
 
-                    var uJsonData = btoa(JSON.stringify(pResponse.data));
-                    setCookie('fdAuth', uJsonData, 7);
-                    setCookie('fdToken', token, 7);
-                    $rootScope.loggedIn = true;
-                    $location.path('/landing');
+        app.controller('charactersController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+
+            //initialize
+            $scope.init = function () {
+
+                if ($rootScope.shows.length > 0) {
+                    $scope.selectedShow = $rootScope.shows[0];
+                    $scope.getCharacterList();
+                }
+            };
+
+            //fetches the character list
+            $scope.loading = false;
+            $scope.getCharacterList = function () {
+                $scope.loading = true;
+                $http.get('api/configuration/characters/' + $scope.selectedShow.id).then(function (response) {
+                    $scope.characters = response.data;
+                    $scope.loading = false;
+                }).catch($rootScope.handleHttpError);
+            };
+
+            //launch edit/add modal
+            $scope.editCharacter = function (ch) {
+
+                if (!ch)
+                    ch = { ShowId: $scope.selectedShow.id };
+
+                $scope.eCh = ch;
+                $('#editCh').modal();
+            };
+
+            $scope.uploadFile = function () {
+
+                var file = $scope.newImg;
+                //send here
+                $rootScope.uploadImage(file, 'chars', function () {
+                    var hi = 0;
                 });
 
-            }).catch(function (response) {
-                $rootScope.handleHttpError(response);
-                $scope.id.Credentials = '';
-                $scope.working = false;
-            });
+            };
 
+            //save changes
+            $scope.saving = false;
+            $scope.saveCharacter = function () {
+                $scope.saving = true;
+                $http.put('api/character', $scope.eCh).then(function (response) {
+
+                    $scope.getCharacterList($scope.eCh.ShowId);
+                    $scope.saving = false;
+                    $('#editCh').modal('hide');
+                }).catch(function (error) {
+                    $rootScope.handleHttpError(error);
+                    $scope.saving = false;
+                    $('#editCh').modal('hide');
+                });
+            };
+
+            $scope.init();
+        }]);
+
+
+
+        app.controller('eventsController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+
+        }]);
+
+
+        app.controller('landingController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+
+
+            //add/edit the episode
+            $scope.editEpisode = function (ep, showId, seasonId) {
+
+                if (!ep)
+                    ep = {
+                        ShowId: showId,
+                        SeasonId: seasonId
+                    };
+
+                $scope.eEp = ep;
+                $('#editEp').modal();
+            };
+
+            $scope.saving = false;
+            //save the episode
+            $scope.saveEpisode = function () {
+
+                $scope.saving = true;
+                $http.put('api/show/season/episode', $scope.eEp).then(function (response) {
+                    $('#editEp').modal('hide');
+                    $rootScope.fetchShowData();
+                }).catch(function (error) {
+                    $scope.saving = false;
+                    $('#editEp').modal('hide');
+                    $rootScope.handleHttpError(error);
+                });
+            };
+
+            $scope.ready = true;
+        }]);
+
+
+        app.controller('scoreController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+
+        }]);
+
+        ///////////// LOGIN
+        app.controller('loginController', ['$scope', '$rootScope', '$http', '$location', function ($scope, $rootScope, $http, $location) {
+
+            $scope.id = {};
+            $scope.working = false;
+            $scope.signIn = function (id) {
+                $scope.working = true;
+                if (id.Credentials === '' || id.PlatformUserId === '') {
+                    $rootScope.handleError('Email / Password cannot be blank.');
+                    $scope.working = false;
+                    return;
+                }
+
+                id.Credentials = btoa(id.Credentials);
+                id.PlatformName = 'Custom';
+
+                $http.put('/api/register/login', id).then(function (response) {
+
+                    var token = response.data;
+                    $http.defaults.headers.common.Authorization = 'Bearer ' + token;
+
+                    $http.get('api/person').then(function (pResponse) {
+
+                        $rootScope.user = pResponse.data;
+
+                        var uJsonData = btoa(JSON.stringify(pResponse.data));
+                        setCookie('fdAuth', uJsonData, 7);
+                        setCookie('fdToken', token, 7);
+                        $rootScope.loggedIn = true;
+                        $location.path('/landing');
+                    });
+
+                }).catch(function (response) {
+                    $rootScope.handleHttpError(response);
+                    $scope.id.Credentials = '';
+                    $scope.working = false;
+                });
+
+            };
+
+        }]);
+
+        var setCookie = function (cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
         };
 
-    }]);
-
-    var setCookie = function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-    };
-
-    var getCookie = function (cname) {
-        var name = cname + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') {
-                c = c.substring(1);
+        var getCookie = function (cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
             }
-            if (c.indexOf(name) == 0) {
-                return c.substring(name.length, c.length);
-            }
-        }
-        return "";
-    };
+            return "";
+        };
 
-})();
+    })();

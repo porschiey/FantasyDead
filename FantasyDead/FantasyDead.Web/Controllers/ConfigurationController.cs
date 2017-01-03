@@ -2,9 +2,13 @@
 {
     using App_Start;
     using Data;
+    using Data.Documents;
     using FantasyDead.Data.Configuration;
+    using Microsoft.WindowsAzure.Storage;
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -162,6 +166,54 @@
         public HttpResponseMessage FetchCharacters(string showId)
         {
             return this.ConvertDbResponse(this.db.FetchCharacters(showId));
+        }
+
+        /// <summary>
+        /// POST api/configuration/image/{folder}
+        /// Uploads an image and places it in the cloud blob storage in that folder.
+        /// </summary>
+        /// <param name="folder"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/configuration/image/{folder}")]
+        public HttpResponseMessage UploadImage(string folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder) || (folder != "chars" && folder != "avs"))
+                return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You must provide a valid folder.");
+
+            if (this.Requestor.Role < PersonRole.Admin && folder == "chars")
+                return this.SpitForbidden();
+
+            //get file
+            try
+            {
+                var files = System.Web.HttpContext.Current.Request.Files;
+                if (files.Count != 1)
+                    return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid file count.");
+                var file = files[0];
+
+                var fileName = Path.GetFileNameWithoutExtension(file.FileName);
+                var extension = Path.GetExtension(file.FileName);
+                var fullName = fileName + extension;
+
+                var act = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["cloudStorage"]);
+                var blobClient = act.CreateCloudBlobClient();
+                var container = blobClient.GetContainerReference(folder);
+                container.CreateIfNotExists();
+
+                var blockBlob = container.GetBlockBlobReference(fullName);
+                using (var stream = file.InputStream)
+                {
+                    blockBlob.UploadFromStream(stream);
+                }
+
+                return this.Request.CreateResponse(HttpStatusCode.OK, blockBlob.Uri.ToString());
+            }
+            catch (Exception ex)
+            {
+                return this.Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Failed to upload the file. Internal error. ");
+            }
+
         }
     }
 }

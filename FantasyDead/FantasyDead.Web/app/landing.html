@@ -75,7 +75,7 @@
         <br />
         <h4>Welcome back, {{user.Username}}. </h4>
         <br />
-        <div ng-show="!ready">
+        <div ng-show="!ready || shows.length === 0">
             <i class="fa fa-spin fa-circle-o-notch"></i>
         </div>
         <div ng-show="ready">

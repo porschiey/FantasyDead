@@ -1,1 +1,113 @@
-﻿chars
+﻿<div class="modal fade" tabindex="-1" role="dialog" id="editCh">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add/Edit Episode</h4>
+            </div>
+            <div class="modal-body">
+
+                <table class="table table-striped">
+                    <tr>
+                        <td>
+                            Character Name
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" ng-model="eCh.Name" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Description
+                        </td>
+                        <td>
+                            <textarea class="form-control" ng-model="eCh.Description"
+                                      cols="20" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Portrait/Image
+                        </td>
+                        <td>
+
+                            <div ng-show="eCh.PrimaryImageUrl">
+                                <img ng-src="{{eCh.PrimaryImageUrl}}" class="character-med" />
+                                <br />
+                                <a ng-click="showUpload = true">Change</a>
+                            </div>
+
+                            <div ng-show="showUpload || !eCh.PrimaryImageUrl">
+                                <input type="file" file-model="newImg" class="form-control" />
+                                <br/>
+                                <button class="btn btn-default" ng-click="uploadFile()">
+                                    Upload
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <div ng-show="!saving">
+                    <button type="button" class="btn btn-default" style="float: left;" ng-show="eCh.id">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveCharacter()">Save changes</button>
+                </div>
+                <div ng-show="saving">
+                    <i class="fa fa-spin fa-circle-o-notch"></i> Working...
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+<div class="row kill-margin">
+    <div class="container">
+
+        <h4>Character Management</h4>
+        <br />
+
+        Select Show:
+        <select class="form-control" style="width: 200pt; display:inline-block;" ng-model="selectedShow" ng-options="show as show.Name for show in shows track by show.id" ng-change="getCharacterList()"></select>
+        <span ng-show="loading">
+            <i class="fa fa-spin fa-circle-o-notch"></i>
+        </span>
+
+        <br />
+        <table class="table table-striped">
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Total Score</th>
+                <th>Dead?</th>
+                <th>Options</th>
+            </tr>
+            <tr ng-repeat="ch in characters">
+                <td>
+                    {{ch.Name}}
+                    <img ng-src="{{ch.PrimaryImageUrl}}" class="character-small" />
+                </td>
+                <td>
+                    {{ch.Description}}
+                </td>
+                <td>
+                    {{ch.TotalScore}}
+                </td>
+                <td>
+                    {{ch.Dead ? (ch.DeadDate | date) : 'Alive'}}
+                </td>
+                <td>
+                    <a ng-click="editCharacter(ch)">
+                        <i class="fa fa-pencil"></i>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
