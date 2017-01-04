@@ -90,7 +90,7 @@
 
         //handles any response error.
         $rootScope.handleHttpError = function (httpResponse) {
-            if (httpResponse.data === '' || httpResponse.data.indexOf('<') !== -1) {
+            if (httpResponse.data === '' || (typeof httpResponse.data === 'string' && httpResponse.data.indexOf('<') !== -1)) {
                 httpResponse.data = { Message: httpResponse.statusText };
             }
             $rootScope.errorMsg = httpResponse.status + ': ' + httpResponse.data.Message;
@@ -431,7 +431,7 @@
     }]);
 
 
-    app.controller('scoreController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+    app.controller('scoreController', ['$scope', '$rootScope', '$http', '$timeout', function ($scope, $rootScope, $http, $timeout) {
 
         $scope.init = function () {
             if ($rootScope.shows.length > 0) {
@@ -439,12 +439,15 @@
                 $scope.selectSeason = true;
                 $scope.fetchConfigurations();
             }
-
+            $scope.clear();
         };
 
         $scope.ready = false;
         $scope.loading = false;
         $scope.fetchEvents = function () {
+            $scope.events = [];
+            $scope.calculating = false;
+            $scope.calcPercent = 0;
             $scope.loading = true;
             $http.get('api/statistics/events/episode/' + $scope.selectedEp.id).then(function (response) {
                 $scope.events = response.data;
@@ -482,15 +485,160 @@
         };
 
         $scope.selectChar = function (ch) {
+            if ($scope.selectedChar && ch.Id === $scope.selectedChar.Id) {
+                $scope.selectedChar = null;
+                $scope.validate();
+                return;
+            }
             $scope.selectedChar = ch;
+            $scope.validate();
         };
 
         $scope.selectDef = function (def) {
+            $('#timestamp-minutes').focus();
+            if ($scope.selectedDef && def.Id === $scope.selectedDef.Id) {
+                $scope.selectedDef = null;
+                $scope.validate();
+                return;
+            }
             $scope.selectedDef = def;
+            $scope.validate();
         };
 
         $scope.selectMod = function (mod) {
+            $('#timestamp-minutes').focus();
+            if ($scope.selectedMod && mod.Id === $scope.selectedMod.Id) {
+                $scope.selectedMod = null;
+                $scope.validate();
+                return;
+            }
             $scope.selectedMod = mod;
+            $scope.validate();
+        };
+
+        $scope.clear = function () {
+            $scope.selectedMod = null;
+            $scope.selectedDef = null;
+            $scope.selectedChar = null;
+            $scope.ev = {};
+            $scope.validate();
+            $scope.epTimestamp = {};
+        };
+
+        $scope.formTimeStamp = function () {
+            var ogM = $scope.epTimestamp.m;
+            var ogS = $scope.epTimestamp.s;
+
+            var mins = parseInt(ogM);
+            var seconds = parseInt(ogS);
+            if (seconds > 60)
+                seconds = 59;
+
+            $scope.epTimestamp.s = seconds;
+
+            var minsInSeconds = mins * 60;
+            var ts = minsInSeconds + seconds;
+            $scope.ev.EpisodeTimestamp = ts;
+            $scope.validate();
+            return ts;
+        };
+
+        $scope.parseTimestamp = function (totalSeconds) {
+
+            if (totalSeconds < 60)
+                return '00:' + totalSeconds;
+
+            var mins = Math.floor(totalSeconds / 60);
+            var secs = totalSeconds % 60;
+
+            var minsStr = mins > 9 ? '' + mins : '0' + mins;
+            var secStr = secs > 9 ? '' + secs : '0' + secs;
+            return minsStr + ':' + secStr;
+        };
+
+        $scope.valid = false;
+        $scope.validate = function () {
+
+            $scope.valid = false;
+            if (!$scope.selectedChar) {
+                $scope.validationMsg = 'Character not selected.';
+                return;
+            }
+            if (!$scope.selectedDef) {
+                $scope.validationMsg = 'Definition not selected.';
+                return;
+            }
+            if (!$scope.ev.EpisodeTimestamp || !$scope.ev.EpisodeTimestamp === 0) {
+                $scope.validationMsg = 'Timestamp is not valid yet.';
+                return;
+            }
+
+            $scope.validationMsg = 'Event is valid.';
+            $scope.valid = true;
+        };
+
+
+        $scope.adding = false;
+        $scope.addEvent = function () {
+            $scope.adding = true;
+
+            var ev = $scope.ev;
+
+            ev.ShowId = $scope.selectedShow.id;
+            ev.EpisodeId = $scope.selectedEp.id;
+            ev.ActionId = $scope.selectedDef.Id;
+            if ($scope.selectedMod)
+                ev.ModifierId = $scope.selectedMod.Id;
+
+            ev.DeathEvent = ($scope.selectedDef.CategoryInt === 6)
+
+            ev.PartitionKey = $scope.selectedChar.Id;
+
+            $http.put('api/event', ev).then(function (response) {
+                $scope.adding = false;
+                $scope.events.push(ev);
+                $scope.ev = {};
+                $scope.formTimeStamp();
+                $scope.fetchEvents();
+            }).catch($rootScope.handleHttpError);
+
+        };
+
+
+        $scope.deleteEv = function (ev) {
+            ev.deleting = true;
+            //api/event/{eventId}/character/{characterId}
+            $http.delete('api/event/' + ev.Id + '/character/' + ev.PartitionKey).then(function (response) {
+                $scope.events = $.grep($scope.events, function (e) {
+                    return e.Id !== ev.Id;
+                });
+
+            }).catch($rootScope.handleHttpError);
+        };
+
+        $scope.calculating = false;
+        $scope.calcCheckLoop = function (calcId) {
+
+            if ($scope.calcPercent >= 100)
+                return;
+
+            $http.get('api/event/progress/' + calcId).then(function (response) {
+                $scope.calcPercent = response.data;
+                $timeout(function () {
+
+                    $scope.calcCheckLoop(calcId);
+                }, 3000);
+            }).catch($rootScope.handleHttpError);
+        };
+
+
+
+        $scope.calculate = function () {
+            $scope.calculating = true;
+            $scope.calcPercent = 0;
+            $http.get('api/event/calculate/' + $scope.selectedEp.id).then(function (response) {
+                $scope.calcCheckLoop(response.data);
+            }).catch($rootScope.handleHttpError);
         };
 
         $scope.init();

@@ -76,10 +76,21 @@
             var showData = this.db.FetchShowData().Content as List<Show>;
             var episode = showData.SelectMany(s => s.Seasons.SelectMany(se => se.Episodes)).First(e=>e.Id == episodeId);
 
-            this.calc.StartEpisodeCalculation(episode);
-            return this.Request.CreateResponse(HttpStatusCode.OK);
+            var id = this.calc.StartEpisodeCalculation(episode);
+            return this.Request.CreateResponse(HttpStatusCode.OK, id);
         }
 
-
+        /// <summary>
+        /// GET api/event/calculate/progress/{calculationId}
+        /// Fetches the progress of an ongoing calculation.
+        /// </summary>
+        /// <param name="calculationId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/event/progress/{calculationId}")]
+        public HttpResponseMessage FetchProgress(string calculationId)
+        {
+            return this.Request.CreateResponse(HttpStatusCode.OK, this.calc.GetProgress(calculationId));
+        }
     }
 }

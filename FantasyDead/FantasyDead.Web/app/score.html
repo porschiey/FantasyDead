@@ -22,86 +22,123 @@
                         ng-options="ep as ep.Name for ep in selectedSeason.Episodes track by ep.id"
                         ng-change="fetchEvents()"></select>
 
+                <div ng-show="events.length > 0">
+
+                    <div ng-show="!calculating">
+                        <br /><br />
+                        <a class="btn btn-lg btn-success" style="margin-left: 50px" ng-click="calculate()">
+                            Calculate Episode + Award Points
+                        </a>
+                        <span class="help-block" style="display: inline; margin-left: 20px;">
+                            This can take several minutes to complete. Please use sparingly.
+                        </span>
+                    </div>
+                    <div ng-show="calculating">
+                        <h2 style="font-weight: lighter; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
+                            <i class="fa fa-spin fa-circle-o-notch" ng-show="calcPercent < 100"> </i> &ensp;{{calcPercent}}% ...
+                        </h2>
+                    </div>
+                </div>
 
                 <div class="text-center" ng-show="loading">
                     <br />
                     <i class="fa fa-2x fa-spin fa-circle-o-notch"></i>
                 </div>
 
+                <br />
+                <h4 ng-init="addingEvent = true" ng-show="ready">
+                    <a ng-click="addingEvent = !addingEvent">
+                        <i class="fa " ng-class="{'fa-minus': addingEvent, 'fa-plus': !addingEvent}"></i>
+                        New Event
+                    </a>
+                </h4>
                 <div ng-show="ready">
-                    <br />
-                    <h4>New Event</h4>
-                    <b>Character Selection</b> <br />
-                    <div class="grid-host row panel panel-default">
-                        <div class="panel-body">
-                            <div class="col-md-2 scoring-tile" ng-repeat="ch in characters | orderBy: 'Name'">
-                                <a class="scoring-tile" ng-click="selectChar(ch)" ng-class="{'active-tile' : selectedChar.Id === ch.Id}">
-                                    {{ch.Name}}
-                                </a>
+                    <div ng-show="addingEvent">
+                        <b>Character Selection</b> <br />
+                        <div class="grid-host row panel panel-default">
+                            <div class="panel-body">
+                                <div class="col-md-2 scoring-tile" ng-repeat="ch in characters | orderBy: 'Name'">
+                                    <a class="scoring-tile" ng-click="selectChar(ch)" ng-class="{'active-tile' : selectedChar.Id === ch.Id}">
+                                        {{ch.Name}}
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <br />
-                    <b>Definitions</b> <br />
-                    <div class="grid-host row panel panel-default">
-                        <div class="panel-body">
-                            <div class="col-md-2 scoring-tile" ng-repeat="def in definitions | orderBy: 'Name'">
-                                <a class="scoring-tile" ng-click="selectDef(def)" ng-class="{'active-tile' : selectedDef.Id === def.Id}">
-                                    {{def.Name}}
-                                </a>
+                        <br />
+                        <b>Definitions</b> <br />
+                        <div class="grid-host row panel panel-default">
+                            <div class="panel-body">
+                                <div class="col-md-2 scoring-tile" ng-repeat="def in definitions | orderBy: 'Name'">
+                                    <a class="scoring-tile" ng-click="selectDef(def)" ng-class="{'active-tile' : selectedDef.Id === def.Id}">
+                                        {{def.Name}}
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <br />
-                    <b>Modifiers</b> <br />
-                    <div class="grid-host row panel panel-default">
+                        <br />
+                        <b>Modifiers</b> <br />
+                        <div class="grid-host row panel panel-default">
 
-                        <div class="panel-body">
+                            <div class="panel-body">
 
-                            <div class="col-md-2 scoring-tile" ng-repeat="mod in modifiers | orderBy: 'Name'">
-                                <a class="scoring-tile" ng-click="selectMod(mod)" ng-class="{'active-tile' : selectedMod.Id === mod.Id}">
-                                    {{mod.Name}}
-                                </a>
+                                <div class="col-md-2 scoring-tile" ng-repeat="mod in modifiers | orderBy: 'Name'">
+                                    <a class="scoring-tile" ng-click="selectMod(mod)" ng-class="{'active-tile' : selectedMod.Id === mod.Id}">
+                                        {{mod.Name}}
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <br />
-                    <b>Options</b> <br />
-                    <div class="grid-host row panel panel-default">
+                        <br />
+                        <b>Options</b> <br />
+                        <div class="grid-host row panel panel-default">
 
-                        <div class="panel-body">
-                            <table class="table" style="width: 800px;">
-                                <tr>
-                                    <td style="width: 250px;">
-                                        Episode Timestamp
-                                    </td>
-                                    <td>
-                                        <input type="text" ng-model="epTimestamp" class="form-control" style="width: 200px;" />
-                                    </td>
-                                <tr>
-                                    <td>
-                                        Extra Note
-                                    </td>
-                                    <td>
-                                        <textarea ng-model="ep.Note" cols="20" rows="5" class="form-control"></textarea>
-                                    </td>
-                                </tr>
+                            <div class="panel-body">
+                                <table class="table" style="width: 800px;">
+                                    <tr>
+                                        <td style="width: 250px;">
+                                            Episode Timestamp
+                                        </td>
+                                        <td>
+                                            <input type="number" ng-model="epTimestamp.m" id="timestamp-minutes"
+                                                   class="form-control" style="width: 50px; float: left;" placeholder="00" />
+                                            <span style="padding: 0px 3px; line-height: 34px; float: left;">:</span>
+                                            <input type="number" ng-model="epTimestamp.s" id="timestamp-seconds"
+                                                   ng-blur="formTimeStamp()"
+                                                   class="form-control" style="width: 50px; float: left;" placeholder="00" />
+                                        </td>
+                                    <tr>
+                                        <td>
+                                            Extra Note
+                                        </td>
+                                        <td>
+                                            <textarea ng-model="ev.Note" cols="20" rows="5" class="form-control"></textarea>
+                                        </td>
+                                    </tr>
 
-                            </table>
+                                </table>
 
+                            </div>
                         </div>
-                    </div>
-                    <br />
-                    <b>Finalize</b> <br />
-                    <div class="grid-host row panel panel-default">
-                        <div class="panel-body">
-                            <a class="btn btn-lg btn-danger" ng-click="clear()">
-                                Clear
-                            </a>
+                        <br />
+                        <b>Finalize</b> <br />
+                        <div class="grid-host row panel panel-default">
+                            <div class="panel-body">
+                                <a class="btn btn-lg btn-danger" ng-click="clear()">
+                                    Clear
+                                </a>
 
-                            <a class="btn btn-lg btn-success" style="margin-left: 50px" ng-click="addEvent()">
-                                Add Event
-                            </a>
+                                <a class="btn btn-lg btn-success" style="margin-left: 50px" ng-click="addEvent()" ng-show="!adding && valid">
+                                    Add Event
+                                </a>
+
+                                <span class="help-block" style="margin-left: 30px; display: inline;" ng-show="!adding">
+                                    {{validationMsg}}
+                                </span>
+
+                                <span class="help-block" style="margin-left: 30px; display: inline;" ng-show="adding">
+                                    <i class="fa fa-spin fa-circle-o-notch"></i> &ensp;Adding...
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -111,7 +148,7 @@
                     <table class="table table-striped">
                         <tr ng-repeat="ev in events | orderBy: 'EpisodeTimestamp'">
                             <td>
-                                {{ev.EpisodeTimestamp}}
+                                {{parseTimestamp(ev.EpisodeTimestamp)}}
                             </td>
                             <td>
                                 {{ ev.Points }}
@@ -123,7 +160,10 @@
                                 {{ev.Notes}}
                             </td>
                             <td>
-                                <a ng-click="deleteEv(ev)"><i class="fa fa-trash"></i> Delete</a>
+                                <span ng-show="ev.deleting">
+                                    <i class="fa fa-spin fa-circle-o-notch"></i>
+                                </span>
+                                <a ng-click="deleteEv(ev)" ng-show="!ev.deleting"><i class="fa fa-trash"></i> Delete</a>
                             </td>
                         </tr>
                     </table>

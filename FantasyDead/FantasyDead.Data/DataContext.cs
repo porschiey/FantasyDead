@@ -147,7 +147,7 @@
         /// </summary>
         /// <param name="fromEpisodeId"></param>
         /// <param name="personId"></param>
-        public async void RevokeEventsFromPerson(string fromEpisodeId, string personId)
+        public async Task RevokeEventsFromPerson(string fromEpisodeId, string personId)
         {
             var person = this.GetPerson(personId);
             person.Events = person.Events.Where(e => e.EpisodeId != fromEpisodeId).ToList();
@@ -626,7 +626,7 @@
         /// <param name="ev"></param>
         public void AddEvent(CharacterEvent ev)
         {
-            if (ev == null || string.IsNullOrWhiteSpace(ev.ActionId) || string.IsNullOrWhiteSpace(ev.EpisodeTimestamp))
+            if (ev == null || string.IsNullOrWhiteSpace(ev.ActionId) || ev.EpisodeTimestamp == 0)
                 throw new ArgumentNullException("Not enough information for a valid event.", nameof(ev));
 
             var op = TableOperation.InsertOrReplace(ev);
@@ -657,12 +657,19 @@
         public void RemoveEvent(string characterId, string eventId)
         {
             var ev = this.FetchSingleEvent(characterId, eventId);
+            if (ev == null)
+                return;
+            ev.ETag = "*";
             var op = TableOperation.Delete(ev);
             this.events.Execute(op);
 
             Task.Run(() =>
             {
                 var evIx = this.FetchSingleEventByEpisode(ev.EpisodeId, ev.Id);
+                if (evIx == null)
+                    return;
+
+                evIx.ETag = "*";
                 var op2 = TableOperation.Delete(evIx);
                 this.events.Execute(op2);
             });
@@ -696,7 +703,13 @@
         /// <returns></returns>
         public CharacterEvent FetchSingleEvent(string characterId, string eventId)
         {
-            return this.FetchSingleEventByKeys(characterId, eventId);
+            var ev = this.FetchSingleEventByKeys(characterId, eventId);
+            if (ev == null)
+                return null;
+
+            var cEv = new CharacterEvent() { PartitionKey = ev.PartitionKey, RowKey = ev.RowKey };
+            cEv.ReadEntity(ev.Properties, null);
+            return cEv;
         }
 
 
@@ -706,9 +719,15 @@
         /// <param name="characterId"></param>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public CharacterEvent FetchSingleEventByEpisode(string episodeId, string eventId)
+        public CharacterEventIndex FetchSingleEventByEpisode(string episodeId, string eventId)
         {
-            return this.FetchSingleEventByKeys(episodeId, eventId);
+            var ev = this.FetchSingleEventByKeys(episodeId, eventId);
+            if (ev == null)
+                return null;
+
+            var cEv = new CharacterEventIndex() { PartitionKey = ev.PartitionKey, RowKey = ev.RowKey }; ;
+            cEv.ReadEntity(ev.Properties, null);
+            return cEv;
         }
 
 
@@ -726,16 +745,15 @@
             return this.events.ExecuteQuery(q).ToList();
         }
 
-        private CharacterEvent FetchSingleEventByKeys(string pkey, string rkey)
+        private DynamicTableEntity FetchSingleEventByKeys(string pkey, string rkey)
         {
             var pkeyF = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, pkey);
             var rkeyF = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rkey);
             var filter = TableQuery.CombineFilters(pkeyF, TableOperators.And, rkeyF);
-            var q = new TableQuery<CharacterEvent>().Where(filter);
+            var q = new TableQuery<DynamicTableEntity>().Where(filter);
 
-            return q
-                .ToList() //execute
-                .FirstOrDefault(); //return single
+            var results = this.events.ExecuteQuery(q).ToList(); //execute
+            return results.FirstOrDefault(); //return single
         }
         #endregion
 

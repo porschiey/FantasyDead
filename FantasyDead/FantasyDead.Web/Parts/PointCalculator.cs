@@ -4,22 +4,26 @@
     using Data.Configuration;
     using Data.Documents;
     using Data.Models;
+    using StackExchange.Redis;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.Caching;
     using System.Threading.Tasks;
     using System.Web;
 
     public class PointCalculator
     {
         private readonly DataContext db;
+        private readonly IDatabase cache;
         /// <summary>
         /// Default constructor.
         /// </summary>
         public PointCalculator(DataContext db)
         {
             this.db = db;
+            this.cache = RedisCache.Connection.GetDatabase();
         }
 
 
@@ -27,9 +31,11 @@
         /// Spawns a task that is responsible for calculting all the points for a given episode and rewarding points.
         /// </summary>
         /// <param name="episodeId"></param>
-        public void StartEpisodeCalculation(Episode episode)
+        public string StartEpisodeCalculation(Episode episode)
         {
-            Task.Run(this.CalculateEpisode(episode));
+            var calcId = Guid.NewGuid().ToString();
+            Task.Run(this.CalculateEpisode(episode, calcId));
+            return calcId;
         }
 
         /// <summary>
@@ -50,7 +56,7 @@
             {
                 //likely an event where the character/definition no longer exists, and thus should not be calculated.
                 ev.Description = "The event related to this character is no longer valid.";
-                ev.Points = 0; 
+                ev.Points = 0;
                 return ev; //return event as is.
             }
 
@@ -80,7 +86,11 @@
                     case ModificationType.Percentage:
                         {
                             ev.Points *= thisMod.ModificationValue;
-                            ev.Description += $", plus {Math.Round((1 - thisMod.ModificationValue) * 100, 1)}% more points w/ mod {thisMod.Name}.";
+                            var percent = thisMod.ModificationValue > 1
+                                ? Math.Round((thisMod.ModificationValue - 1) * 100, 1)
+                                : Math.Round((1 - thisMod.ModificationValue) * 100, 1);
+
+                            ev.Description += $", plus {percent}% more points w/ mod {thisMod.Name}.";
                             break;
                         }
                     default:
@@ -98,7 +108,7 @@
         /// </summary>
         /// <param name="episodeId"></param>
         /// <returns></returns>
-        public Action CalculateEpisode(Episode episode)
+        public Action CalculateEpisode(Episode episode, string calcId)
         {
             return new Action(() =>
             {
@@ -117,6 +127,9 @@
 
                 var deathEvents = new List<CharacterEvent>();
 
+                this.UpdateProgress(calcId, 10);
+
+                var pickChunk = 40.00 / events.Count;
                 foreach (var ev in events)
                 {
                     if (!characterEventDictionary.ContainsKey(ev.CharacterId))
@@ -128,6 +141,9 @@
 
                     if (ev.DeathEvent)
                         deathEvents.Add(ev);
+
+                    var prog = this.GetProgress(calcId) + (int)Math.Round(pickChunk);
+                    this.UpdateProgress(calcId, prog);
                 }
 
                 var affectedCharacters = events.Select(e => e.CharacterId).Distinct().ToList();
@@ -135,6 +151,7 @@
 
                 var users = new ConcurrentDictionary<string, List<CharacterEvent>>();
 
+                var aggChunk = 10.00 / picksDictionary.Count;
                 Parallel.ForEach(picksDictionary, (picks) =>
                 {
                     var characterId = picks.Key;
@@ -152,7 +169,7 @@
                             {
                                 //this episode has already been calculated, but clearly a request has come in to re-calculate.
                                 //thus, we've got to revoke previous events already calculated to start over
-                                this.db.RevokeEventsFromPerson(epId, personId);
+                                this.db.RevokeEventsFromPerson(epId, personId).Wait();
                             }
                         }
 
@@ -165,19 +182,44 @@
                             users[personId].Add(bonus);
                             continue; // don't do normal additive since it's a death slot
                         }
-                        users[personId].AddRange(characterEventsThisEpisode); //add character events to that user                        
+                        users[personId].AddRange(characterEventsThisEpisode); //add character events to that user                     
                     }
+
+                    var prog = this.GetProgress(calcId) + (int)Math.Round(aggChunk);
+                    this.UpdateProgress(calcId, prog);
                 });
 
+                var userChunk = 30.00 / users.Count;
                 Parallel.ForEach(users, (u) =>
                 {
                     this.db.AddEventsToPerson(u.Value, u.Key); //this also tallies all the person's events to generate total score
+                    var prog = this.GetProgress(calcId) + (int)Math.Round(userChunk);
+                    this.UpdateProgress(calcId, prog);
                 });
 
                 episode.Calculated = true;
                 episode.CalculationDate = DateTime.UtcNow;
                 this.db.UpsertEpisode(episode).Wait();
+                this.UpdateProgress(calcId, 100);
             });
+        }
+
+        private void UpdateProgress(string calcId, int percent)
+        {
+            cache.StringSet(calcId, percent.ToString());
+        }
+
+        /// <summary>
+        /// Fetches the progress of a calculation.
+        /// </summary>
+        /// <param name="calcId"></param>
+        /// <returns></returns>
+        public int GetProgress(string calcId)
+        {
+            if (!this.cache.KeyExists(calcId))
+                return 0;
+
+            return Convert.ToInt32(this.cache.StringGet(calcId));
         }
     }
 }

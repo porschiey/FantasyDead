@@ -15,7 +15,7 @@
 
         public string ShowId { get; set; }
 
-        public string EpisodeTimestamp { get; set; }
+        public int EpisodeTimestamp { get; set; }
 
         public string CharacterId => this.PartitionKey;
 
