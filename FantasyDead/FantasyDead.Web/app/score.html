@@ -1,1 +1,135 @@
-﻿score
+﻿<div class="row kill-margin">
+    <div class="container">
+        <br />
+        <div class="panel panel-default">
+            <div class="panel-body">
+
+                <h4>Score an Episode</h4>
+
+                Select an Episode:
+                <select class="form-control" style="width: 200pt; display:inline-block;"
+                        ng-model="selectedShow"
+                        ng-options="show as show.Name for show in shows track by show.id"
+                        ng-change="populateSeasons()"></select>
+
+                <select ng-show="selectSeason" class="form-control" style="width: 200pt; display:inline-block;"
+                        ng-model="selectedSeason"
+                        ng-options="se as se.Name for se in selectedShow.Seasons track by se.id"
+                        ng-change="selectEpisode = true"></select>
+
+                <select ng-show="selectEpisode" class="form-control" style="width: 200pt; display:inline-block;"
+                        ng-model="selectedEp"
+                        ng-options="ep as ep.Name for ep in selectedSeason.Episodes track by ep.id"
+                        ng-change="fetchEvents()"></select>
+
+
+                <div class="text-center" ng-show="loading">
+                    <br />
+                    <i class="fa fa-2x fa-spin fa-circle-o-notch"></i>
+                </div>
+
+                <div ng-show="ready">
+                    <br />
+                    <h4>New Event</h4>
+                    <b>Character Selection</b> <br />
+                    <div class="grid-host row panel panel-default">
+                        <div class="panel-body">
+                            <div class="col-md-2 scoring-tile" ng-repeat="ch in characters | orderBy: 'Name'">
+                                <a class="scoring-tile" ng-click="selectChar(ch)" ng-class="{'active-tile' : selectedChar.Id === ch.Id}">
+                                    {{ch.Name}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <b>Definitions</b> <br />
+                    <div class="grid-host row panel panel-default">
+                        <div class="panel-body">
+                            <div class="col-md-2 scoring-tile" ng-repeat="def in definitions | orderBy: 'Name'">
+                                <a class="scoring-tile" ng-click="selectDef(def)" ng-class="{'active-tile' : selectedDef.Id === def.Id}">
+                                    {{def.Name}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <b>Modifiers</b> <br />
+                    <div class="grid-host row panel panel-default">
+
+                        <div class="panel-body">
+
+                            <div class="col-md-2 scoring-tile" ng-repeat="mod in modifiers | orderBy: 'Name'">
+                                <a class="scoring-tile" ng-click="selectMod(mod)" ng-class="{'active-tile' : selectedMod.Id === mod.Id}">
+                                    {{mod.Name}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <b>Options</b> <br />
+                    <div class="grid-host row panel panel-default">
+
+                        <div class="panel-body">
+                            <table class="table" style="width: 800px;">
+                                <tr>
+                                    <td style="width: 250px;">
+                                        Episode Timestamp
+                                    </td>
+                                    <td>
+                                        <input type="text" ng-model="epTimestamp" class="form-control" style="width: 200px;" />
+                                    </td>
+                                <tr>
+                                    <td>
+                                        Extra Note
+                                    </td>
+                                    <td>
+                                        <textarea ng-model="ep.Note" cols="20" rows="5" class="form-control"></textarea>
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                        </div>
+                    </div>
+                    <br />
+                    <b>Finalize</b> <br />
+                    <div class="grid-host row panel panel-default">
+                        <div class="panel-body">
+                            <a class="btn btn-lg btn-danger" ng-click="clear()">
+                                Clear
+                            </a>
+
+                            <a class="btn btn-lg btn-success" style="margin-left: 50px" ng-click="addEvent()">
+                                Add Event
+                            </a>
+                        </div>
+                    </div>
+
+                    <br />
+                    <h4>Current Events</h4>
+                    <span class="help-block" ng-show="events.length === 0">No events yet for this episode.</span>
+                    <table class="table table-striped">
+                        <tr ng-repeat="ev in events | orderBy: 'EpisodeTimestamp'">
+                            <td>
+                                {{ev.EpisodeTimestamp}}
+                            </td>
+                            <td>
+                                {{ ev.Points }}
+                            </td>
+                            <td>
+                                {{ev.Description}}
+                            </td>
+                            <td>
+                                {{ev.Notes}}
+                            </td>
+                            <td>
+                                <a ng-click="deleteEv(ev)"><i class="fa fa-trash"></i> Delete</a>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

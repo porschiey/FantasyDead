@@ -90,7 +90,7 @@
 
         //handles any response error.
         $rootScope.handleHttpError = function (httpResponse) {
-            if (httpResponse.data === '') {
+            if (httpResponse.data === '' || httpResponse.data.indexOf('<') !== -1) {
                 httpResponse.data = { Message: httpResponse.statusText };
             }
             $rootScope.errorMsg = httpResponse.status + ': ' + httpResponse.data.Message;
@@ -277,7 +277,7 @@
                 return;
             }
 
-            
+
 
             switch (mod.ModificationTypeInt.id) {
                 case 0: {
@@ -384,7 +384,7 @@
 
                 $scope.init();
                 $scope.saving = false;
-                $('#editDef').modal('hide');
+                $('#editMod').modal('hide');
             }).catch(function (error) {
                 $rootScope.handleHttpError(error);
                 $scope.saving = false;
@@ -433,6 +433,67 @@
 
     app.controller('scoreController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
 
+        $scope.init = function () {
+            if ($rootScope.shows.length > 0) {
+                $scope.selectedShow = $rootScope.shows[0];
+                $scope.selectSeason = true;
+                $scope.fetchConfigurations();
+            }
+
+        };
+
+        $scope.ready = false;
+        $scope.loading = false;
+        $scope.fetchEvents = function () {
+            $scope.loading = true;
+            $http.get('api/statistics/events/episode/' + $scope.selectedEp.id).then(function (response) {
+                $scope.events = response.data;
+                $scope.ready = true;
+                $scope.loading = false;
+            }).catch(function (error) {
+                $scope.ready = true;
+                $scope.loading = false;
+                $rootScope.handleHttpError(error);
+            });
+        };
+
+
+        $scope.fetchConfigurations = function () {
+            $scope.definitions = null;
+            $scope.modifiers = null;
+
+            $http.get('api/configuration/definitions/' + $scope.selectedShow.id).then(function (response) {
+                $scope.definitions = response.data;
+            }).catch($rootScope.handleHttpError);
+
+            $http.get('api/configuration/modifiers/' + $scope.selectedShow.id).then(function (response) {
+                $scope.modifiers = response.data;
+            }).catch($rootScope.handleHttpError);
+
+            $http.get('api/configuration/characters/' + $scope.selectedShow.id).then(function (response) {
+                $scope.characters = response.data;
+            }).catch($rootScope.handleHttpError);
+        };
+
+
+        $scope.populateSeasons = function () {
+            $scope.fetchConfigurations();
+            $scope.selectSeason = true;
+        };
+
+        $scope.selectChar = function (ch) {
+            $scope.selectedChar = ch;
+        };
+
+        $scope.selectDef = function (def) {
+            $scope.selectedDef = def;
+        };
+
+        $scope.selectMod = function (mod) {
+            $scope.selectedMod = mod;
+        };
+
+        $scope.init();
     }]);
 
     ///////////// LOGIN

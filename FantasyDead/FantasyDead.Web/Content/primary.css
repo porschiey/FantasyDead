@@ -108,3 +108,33 @@ div.portrait-med {
         height: 100%;
         border: 0;
     }
+
+    div.grid-host{
+        margin: 0px 10px;
+    }
+
+div.scoring-tile {
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    position: relative;
+    width: inherit;
+}
+
+    div.scoring-tile a {
+        width: 100%;
+        height: 80px;
+        border: 1px solid #ccc;
+        text-align: center;
+        line-height: 80px;
+        padding: 20px 20px;
+        margin: 10px 10px;
+    }
+     div.scoring-tile a:hover{
+         background-color: #dfdfdf;
+         color: #111;
+     }
+     div.scoring-tile a.active-tile{
+         background-color: #111;
+         color: #f2f2f2;
+     }

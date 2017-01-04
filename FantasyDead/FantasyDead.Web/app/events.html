@@ -157,7 +157,7 @@
                 <h4>Event Definitions & Modifiers</h4>
                 Select Show:
                 <select class="form-control" style="width: 200pt; display:inline-block;" ng-model="selectedShow" ng-options="show as show.Name for show in shows track by show.id" ng-change="fetchConfigurations()"></select>
-                <span ng-show="loading">
+                <span ng-show="loading">                    
                     <i class="fa fa-spin fa-circle-o-notch"></i>
                 </span>
 

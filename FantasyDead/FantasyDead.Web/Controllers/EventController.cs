@@ -81,17 +81,5 @@
         }
 
 
-        /// <summary>
-        /// GET api/event/list/{characterId}
-        /// Lists all of the events for a character.
-        /// </summary>
-        /// <param name="characterId"></param>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("api/event/list/{characterId}")]
-        public HttpResponseMessage ListEvents(string characterId)
-        {
-            throw new NotImplementedException(); //TODO: MOVE TO STATS CONTROLLER
-        }
     }
 }
