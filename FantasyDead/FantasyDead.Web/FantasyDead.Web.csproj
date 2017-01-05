@@ -236,6 +236,10 @@
     <Content Include="Content\datetimepicker.css" />
     <Content Include="Content\font-awesome.css" />
     <Content Include="Content\font-awesome.min.css" />
+    <Content Include="Content\Images\newSiteLanding.png" />
+    <Content Include="Content\Images\newSiteLandingM.png" />
+    <Content Include="Content\Images\newSiteLandingMbottom.png" />
+    <Content Include="Content\Images\newSiteLandingMtop.png" />
     <Content Include="Content\primary.css" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\fontawesome-webfont.svg" />

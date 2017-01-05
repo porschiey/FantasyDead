@@ -23,12 +23,12 @@ div.sub-nav {
 .navbar {
     margin-bottom: 0;
     border-radius: 0;
-    background-color: #111;
+    background-color: #FFF;
     border: 0;
 }
 
 .navbar-default .navbar-nav > li > a {
-    color: #f2f2f2;
+    color: #111111;
 }
 
     .navbar-default .navbar-nav > li > a:hover {
@@ -80,10 +80,12 @@ div.alert a {
 }
 
 
-    .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+     .btn-primary:focus, .btn-primary:active {
         background-color: #964514;
     }
-
+.btn-primary:hover{
+    background-color: #000;
+}
 .btn {
     border-radius: 0 !important;
 }
@@ -109,9 +111,9 @@ div.portrait-med {
         border: 0;
     }
 
-    div.grid-host{
-        margin: 0px 10px;
-    }
+div.grid-host {
+    margin: 0px 10px;
+}
 
 div.scoring-tile {
     padding: 0;
@@ -130,11 +132,75 @@ div.scoring-tile {
         padding: 20px 20px;
         margin: 10px 10px;
     }
-     div.scoring-tile a:hover{
-         background-color: #dfdfdf;
-         color: #111;
-     }
-     div.scoring-tile a.active-tile{
-         background-color: #111;
-         color: #f2f2f2;
-     }
+
+        div.scoring-tile a:hover {
+            background-color: #dfdfdf;
+            color: #111;
+        }
+
+        div.scoring-tile a.active-tile {
+            background-color: #111;
+            color: #f2f2f2;
+        }
+
+
+div.landing-lg {
+    background-size: cover;
+    background-position: top left;
+    background-image: url(/Content/Images/newSiteLanding.png);
+    height: calc(100%);
+    position: absolute;
+    width: 100%;
+        padding: 0;
+}
+
+
+div.landing-sm {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-image: url(/Content/Images/newSiteLandingMtop.png);
+    height: calc(100%);
+    position: absolute;
+    width: 100%;
+    margin-top: 60px;
+    padding: 0;
+}
+
+
+div.mobile-art-bottom {
+    background-image: url(/Content/Images/newSiteLandingMbottom.png);
+    background-position: bottom center;
+    position: absolute;
+    bottom: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 607px;
+    display: block;
+}
+
+div.dl-buttons-sm{
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    top: 150px;
+    height: auto;
+    z-index: 100;
+}
+
+div.dl-buttons-lg {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    bottom: 150px;    
+    height: auto;
+    z-index: 100;
+}
+
+div.dl-buttons-sm a, div.dl-buttons-lg a{
+    margin: 10px;
+}
+div.dl-buttons-lg a{
+    margin-right: 100px;
+}
