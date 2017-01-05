@@ -1,11 +1,16 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
     using Data;
+    using Data.Documents;
+    using Microsoft.Azure.NotificationHubs;
+    using Models;
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Threading.Tasks;
     using System.Web.Http;
 
     /// <summary>
@@ -15,6 +20,8 @@
     {
 
         private readonly DataContext db;
+        private NotificationHubClient hub;
+
 
         /// <summary>
         /// Default constructor.
@@ -49,6 +56,105 @@
         {
             var person = this.db.GetPerson(id);
             return this.Request.CreateResponse(HttpStatusCode.OK, person);
+        }
+
+        /// <summary>
+        /// POST api/person/config/{key}
+        /// Updates a person's configuration.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/person/config/{key}")]
+        public async Task<HttpResponseMessage> UpdateConfiguration(string key, [FromBody] string value)
+        {
+            var person = this.db.GetPerson(this.Requestor.PersonId);
+            if (person.Configuration == null)
+                person.Configuration = new Dictionary<string, string>();
+
+            if (!person.Configuration.ContainsKey(key))
+                person.Configuration.Add(key, string.Empty);
+
+            person.Configuration[key] = value;
+
+            await this.db.UpdatePerson(person);
+
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// PUT api/person/push/register
+        /// Registers the person for push notifications on their device.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/person/push/register")]
+        public async Task<HttpResponseMessage> RegisterPush(PushRequest req)
+        {
+            this.InitializeHub();
+            req.Device = req.Device.ToLowerInvariant().Trim();
+
+            RegistrationDescription reg;
+            switch (req.Device)
+            {
+                case "android":
+                    {
+                        reg = new GcmRegistrationDescription(req.RegistrationId);
+                        break;
+                    }
+                default:
+                    {
+                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Push notification is not supported for this device");
+                    }
+            }
+            reg.Tags = new HashSet<string>();
+            reg.Tags.Add(this.Requestor.PersonId);
+            reg = await this.hub.CreateRegistrationAsync(reg);
+
+            var person = this.db.GetPerson(this.Requestor.PersonId);
+            person.PushNotificationData = reg.RegistrationId;
+            await this.db.UpdatePerson(person);
+
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// DELETE api/person/push/cancel
+        /// Removes push notification subscription.
+        /// </summary>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("api/person/push/cancel")]
+        public async Task<HttpResponseMessage> CancelPush()
+        {
+            this.InitializeHub();
+
+            var person = this.db.GetPerson(this.Requestor.PersonId);
+            if (string.IsNullOrWhiteSpace(person.PushNotificationData))
+                return this.Request.CreateResponse(HttpStatusCode.OK);
+            try
+            {
+
+                await this.hub.DeleteRegistrationAsync(person.PushNotificationData);
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
+            person.PushNotificationData = null;
+            await this.db.UpdatePerson(person);
+
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+
+        private void InitializeHub()
+        {
+            this.hub = NotificationHubClient.CreateClientFromConnectionString(ConfigurationManager.AppSettings["notificationHub"], "primary");
         }
     }
 }

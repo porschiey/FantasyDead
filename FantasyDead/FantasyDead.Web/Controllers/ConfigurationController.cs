@@ -23,6 +23,8 @@
 
         private readonly DataContext db;
 
+        private readonly List<string> acceptedExtensions = new List<string> { ".jpg", ".jpeg", ".gif", ".png" };
+
         /// <summary>
         /// Default constructor.
         /// </summary>
@@ -176,7 +178,7 @@
         /// <returns></returns>
         [HttpPost]
         [Route("api/configuration/image/{folder}")]
-        public HttpResponseMessage UploadImage(string folder)
+        public async Task<HttpResponseMessage> UploadImage(string folder)
         {
             if (string.IsNullOrWhiteSpace(folder) || (folder != "chars" && folder != "avs"))
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You must provide a valid folder.");
@@ -196,6 +198,22 @@
                 var extension = Path.GetExtension(file.FileName);
                 var fullName = fileName + extension;
 
+
+                //validate file
+                if (folder == "avs")
+                {
+                    var img = System.Drawing.Image.FromStream(file.InputStream);
+                    if (img.Width > 200 || img.Height > 200)
+                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "The avatar dimensions are too large.");
+
+                    if (file.ContentLength > 1000000)
+                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "The file is too large. It must be less than 1MB");
+
+                    if (!acceptedExtensions.Contains(extension.ToLowerInvariant()))
+                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, $"The file must be one of the following types: {string.Join(", ", acceptedExtensions)}");
+                }
+
+
                 var act = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["cloudStorage"]);
                 var blobClient = act.CreateCloudBlobClient();
                 var container = blobClient.GetContainerReference(folder);
@@ -205,6 +223,15 @@
                 using (var stream = file.InputStream)
                 {
                     blockBlob.UploadFromStream(stream);
+                }
+
+
+                if (folder == "avs")
+                {
+                    //update user's avatar
+                    var person = this.db.GetPerson(this.Requestor.PersonId);
+                    person.AvatarPictureUrl = blockBlob.Uri.ToString();
+                    await this.db.UpdatePerson(person);
                 }
 
                 return this.Request.CreateResponse(HttpStatusCode.OK, blockBlob.Uri.ToString());

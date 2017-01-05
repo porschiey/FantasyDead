@@ -31,7 +31,12 @@
         public string PushNotificationData { get; set; }
 
         public int Role { get; set; } //0 = member, 1 = mod, 2 = admin, -1 = banned
+
+        public Dictionary<string, string> Configuration { get; set; }
     }
+
+
+
 
     public class SocialIdentity
     {
