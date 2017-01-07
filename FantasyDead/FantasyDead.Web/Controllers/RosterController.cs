@@ -57,5 +57,18 @@
 
             return this.ConvertDbResponse(await this.db.PushEpisodePick(epPick));
         }
+
+        /// <summary>
+        /// GET api/roster/picks
+        /// Fetches all of the requestor's slotted characters for any show/episode.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/roster/picks")]
+        public HttpResponseMessage GetPicks()
+        {
+            var picks = this.db.GetEpisodePicks(this.Requestor.PersonId);
+            return this.Request.CreateResponse(HttpStatusCode.OK, picks);
+        }
     }
 }

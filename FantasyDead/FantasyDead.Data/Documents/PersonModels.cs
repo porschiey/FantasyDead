@@ -32,19 +32,47 @@
 
         public int Role { get; set; } //0 = member, 1 = NewUser, 2 = admin, -1 = banned
 
-        public Dictionary<string, string> Configuration { get; set; }
+        public PersonConfiguration Configuration { get; set; }
 
+        public List<string> Friends { get; set; }
 
-        public void StripCreds()
+        public Person StripCreds()
         {
-            foreach (var cred in this.Identities)
+            var p = new Person()
+            {
+                Id = this.Id,
+                Username = this.Username,
+                AvatarPictureUrl = this.AvatarPictureUrl,
+                TotalScore = this.TotalScore,
+                Email = this.Email,
+                Identities = this.Identities,
+                Events = this.Events,
+                JoinedDate = this.JoinedDate,
+                PushNotificationData = this.PushNotificationData,
+                Role = this.Role,
+                Configuration = this.Configuration
+            };
+
+
+            foreach (var cred in p.Identities)
             {
                 cred.Credentials = string.Empty;
             }
+
+            return p;
         }
     }
 
 
+    public class PersonConfiguration
+    {
+        public bool ReceiveNotifications { get; set; }
+
+        public int DeadlineReminderHours { get; set; }
+
+        public bool NotifyWhenScored { get; set; }
+
+    }
 
 
     public class SocialIdentity

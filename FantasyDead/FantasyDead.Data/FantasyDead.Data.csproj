@@ -89,6 +89,7 @@
     <Compile Include="Documents\ShowModels.cs" />
     <Compile Include="Models\CharacterEvent.cs" />
     <Compile Include="Documents\EpisodePick.cs" />
+    <Compile Include="Models\LeaderboardResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

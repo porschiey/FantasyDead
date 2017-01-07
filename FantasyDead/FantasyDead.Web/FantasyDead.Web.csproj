@@ -272,6 +272,7 @@
     <Compile Include="Models\PushRequest.cs" />
     <Compile Include="Models\RegistrationRequest.cs" />
     <Compile Include="Models\SlimPerson.cs" />
+    <Compile Include="Models\UpdateEmailReq.cs" />
     <Compile Include="Parts\PointCalculator.cs" />
     <Compile Include="Parts\RedisCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

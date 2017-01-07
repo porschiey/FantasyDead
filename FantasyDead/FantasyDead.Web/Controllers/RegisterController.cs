@@ -71,7 +71,7 @@
                 AvatarPictureUrl = string.Empty,
                 Role = (int)PersonRole.NewUser,
                 Email = req.Email,
-                Configuration = new Dictionary<string, string>()
+                Configuration = new PersonConfiguration()
             };
 
             return await this.CreatePerson(person);
@@ -152,7 +152,7 @@
             {
                 Identities = new List<SocialIdentity>(),
                 PersonId = Guid.NewGuid().ToString(),
-                Configuration = new Dictionary<string, string>(),
+                Configuration = new PersonConfiguration(),
                 Events = new List<CharacterEvent>(),
                 JoinedDate = DateTime.UtcNow,
                 Role = (int)PersonRole.NewUser

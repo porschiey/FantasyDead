@@ -307,6 +307,11 @@ div.avatar-modal {
     padding: 10px;
 }
 
+div.notification-modal{
+    text-align: center;
+    padding: 15px;
+    font-size: 14pt;
+}
 
 h3.gray-header {
     color: #9b9b9b;

@@ -105,13 +105,13 @@
             <p class="list-group-item disabled">
                 {{user.Username}}
             </p>
-            <p class="list-group-item disabled">
+            <a class="list-group-item" ng-click="changeEmail()">
                 {{user.Email}}
-            </p>
-            <a class="list-group-item" ng-click="avatarModal()">
+            </a>
+            <a class="list-group-item" ng-click="changeAvatar()">
                 Change Avatar
                 <span class="badge-clear">
-                    <img ng-src="{{user.Avatar}}" class="avatar-tiny" />
+                    <img ng-src="{{user.AvatarPictureUrl}}" class="avatar-tiny" />
                 </span>
             </a>
             <a class="list-group-item" ng-click="logout()">Logout</a>
@@ -132,20 +132,26 @@
                 <span class="helper-block">How much advance warning would you like?</span>
                 <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
                         ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours)">
+                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)">
                 </select>
             </p>
+            <a class="list-group-item" ng-click="toggleNotifyWhenScored()">
+                Notify when an episode is scored
+                <span class="badge-clear" ng-class="{'badge-lit': user.Configuration.NotifyWhenScored}">
+                    <i class="fa fa-2x" ng-class="{'fa-toggle-on': user.Configuration.NotifyWhenScored, 'fa-toggle-off': !user.Configuration.NotifyWhenScored}"></i>
+                </span>
+            </a>
         </div>
     </div>
     <div class="settings-spacer"></div>
     <h4>Extras</h4>
     <div class="settings-list">
         <div class="list-group">
-            <a class="list-group-item" ng-click="openWebsite()">Contact / Support</a>
-            <a class="list-group-item" ng-click="showPrivacyModal()">Privacy</a>
-            <a class="list-group-item" ng-click="showDisclaimerModal()">Disclaimer</a>
+            <a class="list-group-item" href="https://thefantasydead.com/" target="_blank">Website</a>
+            <a class="list-group-item" href="https://thefantasydead.com/home/privacy" target="_blank">Privacy</a>
+            <a class="list-group-item" href="https://thefantasydead.com/home/legal" target="_blank">Disclaimer</a>
             <a class="list-group-item" ng-click="rateApp()">Rate this app</a>
-            <p class="list-group-item">Version 0.1</p>
+            <p class="list-group-item">Version 0.61</p>
         </div>
     </div>
 

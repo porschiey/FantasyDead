@@ -42,8 +42,8 @@
         public HttpResponseMessage Profile()
         {
             var person = this.db.GetPerson(this.Requestor.PersonId);
-            person.StripCreds();
-            return this.Request.CreateResponse(HttpStatusCode.OK, person);
+            var stripped = person.StripCreds();
+            return this.Request.CreateResponse(HttpStatusCode.OK, stripped);
         }
 
         /// <summary>
@@ -56,8 +56,81 @@
         public HttpResponseMessage Profile(string id)
         {
             var person = this.db.GetPerson(id);
-            person.StripCreds();
-            return this.Request.CreateResponse(HttpStatusCode.OK, person);
+            var stripped = person.StripCreds();
+            return this.Request.CreateResponse(HttpStatusCode.OK, stripped);
+        }
+
+        /// <summary>
+        /// POST api/person/email
+        /// Updates a user's email and username if they're a new user.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/person/email")]
+        public async Task<HttpResponseMessage> UpdateUsernameAndEmail([FromBody] UpdateEmailReq req)
+        {
+            var person = this.db.GetPerson(this.Requestor.PersonId, false);
+
+            if (!string.IsNullOrWhiteSpace(req.Username))
+            {
+                if (person.Role != (int)PersonRole.NewUser)
+                    return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You cannot change your username.");
+
+                person.Role = (int)PersonRole.Member;
+
+                var alreadyExist = this.db.GetPersonIdByUsername(req.Username);
+                if (alreadyExist != null)
+                    return this.Request.CreateErrorResponse(HttpStatusCode.Conflict, "That username is already taken.");
+
+                person.Username = req.Username;
+            }
+            person.Email = req.Email;
+
+            await this.db.UpdatePerson(person);
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
+
+        /// <summary>
+        /// DELETE api/person/friend/{personId}
+        /// Removes a friend from the requestor's friends list.
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("api/person/friend/{personId}")]
+        public async Task<HttpResponseMessage> RemoveFriend(string personId)
+        {
+            var person = this.db.GetPerson(this.Requestor.PersonId, false);
+            if (person.Friends == null)
+                return this.Request.CreateResponse(HttpStatusCode.OK);
+
+            person.Friends.Remove(personId);
+
+            await this.db.UpdatePerson(person);
+            return this.Request.CreateResponse(HttpStatusCode.Created);
+        }
+
+
+        /// <summary>
+        /// PUT api/person/friend/{personId}
+        /// Adds a friend to the requestor's friends list.
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/person/friend/{personId}")]
+        public async Task<HttpResponseMessage> AddFriend(string personId)
+        {
+            var person = this.db.GetPerson(this.Requestor.PersonId, false);
+            if (person.Friends == null)
+                person.Friends = new List<string>();
+
+            person.Friends.Add(personId);
+
+            await this.db.UpdatePerson(person);
+            return this.Request.CreateResponse(HttpStatusCode.Created);
         }
 
         /// <summary>
@@ -72,31 +145,31 @@
         {
             var person = this.db.GetPerson(this.Requestor.PersonId);
 
-            if (key == "username")
+            if (value == null)
+                return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Value was null");
+
+            switch (key)
             {
-                if (person.Role != (int)PersonRole.NewUser)
-                    return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You cannot change your username.");
+                default:
+                    {
+                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Invalid key.");
+                    }
+                case "ReceiveNotifications":
+                    {
+                        person.Configuration.ReceiveNotifications = Convert.ToBoolean(value);
+                        break;
+                    }
+                case "DeadlineReminderHours":
+                    {
+                        person.Configuration.DeadlineReminderHours = Convert.ToInt32(value);
+                        break;
+                    }
+                case "NotifyWhenScored":
+                    {
+                        person.Configuration.NotifyWhenScored = Convert.ToBoolean(value);
+                        break;
+                    }
 
-                person.Role = (int)PersonRole.Member;
-                var alreadyExist = this.db.GetPersonIdByUsername(value);
-                if (alreadyExist != null)
-                    return this.Request.CreateErrorResponse(HttpStatusCode.Conflict, "That username is already taken.");
-
-                person.Username = value;
-            }
-            else if (key == "email")
-            {
-                person.Email = value;
-            }
-            else
-            {
-                if (person.Configuration == null)
-                    person.Configuration = new Dictionary<string, string>();
-
-                if (!person.Configuration.ContainsKey(key))
-                    person.Configuration.Add(key, string.Empty);
-
-                person.Configuration[key] = value;
             }
 
             await this.db.UpdatePerson(person);
@@ -137,12 +210,9 @@
             person.PushNotificationData = reg.RegistrationId;
 
             if (person.Configuration == null)
-                person.Configuration = new Dictionary<string, string>();
+                person.Configuration = new PersonConfiguration();
 
-            if (!person.Configuration.ContainsKey("ReceiveNotifications"))
-                person.Configuration.Add("ReceiveNotifications", true.ToString());
-            else
-                person.Configuration["ReceiveNotifications"] = true.ToString();
+            person.Configuration.ReceiveNotifications = true;
 
             await this.db.UpdatePerson(person);
 
@@ -176,7 +246,7 @@
             }
 
             person.PushNotificationData = null;
-            person.Configuration["ReceiveNotifications"] = false.ToString();
+            person.Configuration.ReceiveNotifications = false;
             await this.db.UpdatePerson(person);
 
             return this.Request.CreateResponse(HttpStatusCode.OK);
@@ -185,7 +255,7 @@
 
         private void InitializeHub()
         {
-            this.hub = NotificationHubClient.CreateClientFromConnectionString(ConfigurationManager.AppSettings["notificationHub"], "primary");
+            this.hub = NotificationHubClient.CreateClientFromConnectionString(ConfigurationManager.AppSettings["notificationHub"], "push");
         }
     }
 }

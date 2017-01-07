@@ -6,6 +6,7 @@
     using Microsoft.ApplicationInsights;
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.Client;
+    using Microsoft.Azure.Documents.Linq;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using System;
@@ -115,6 +116,11 @@
         {
             if (person == null || string.IsNullOrWhiteSpace(person.Id))
                 return DataContextResponse.Error(HttpStatusCode.BadRequest, "Invalid request, data is missing.");
+
+            if (person.Identities[0].Credentials == "")
+            {
+                var CULPRIT = 0;
+            }
 
             try
             {
@@ -239,6 +245,50 @@
                 this.cache.Add(key, p, new CacheItemPolicy { AbsoluteExpiration = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)) });
 
             return p;
+        }
+
+
+        /// <summary>
+        /// Fetches a full list of people (can be used as Leaderboard).
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public List<Person> GetPeopleByList(List<string> ids)
+        {
+            var arr = $"['{string.Join("','", ids)}']";
+            var people = this.db.CreateDocumentQuery<Person>(this.peopleColUri,
+                $"select * from people p where array_contains({arr}, p.Username)");
+
+            var result = people.ToList();
+            return result;
+        }
+
+        /// <summary>
+        /// Fetches the leaderboard, in pages 100 people per page.
+        /// </summary>
+        /// <param name="contToken"></param>
+        /// <returns></returns>
+        public async Task<LeaderboardResult> Leaderboard(string contToken)
+        {
+            var options = new FeedOptions
+            {
+                MaxItemCount = 100,
+                RequestContinuation = contToken
+            };
+
+            var q = this.db.CreateDocumentQuery<Person>
+                (this.peopleColUri, $"SELECT p.id, p.AvatarPictureUrl, p.Username, p.Events, p.TotalScore FROM people p order by p.TotalScore desc", options)
+                .AsDocumentQuery();
+
+            var result = await q.ExecuteNextAsync<Person>();
+
+            var pageResult = new LeaderboardResult
+            {
+                People = result.ToList(),
+                ContinuationToken = result.ResponseContinuation
+            };
+
+            return pageResult;
         }
 
         #endregion

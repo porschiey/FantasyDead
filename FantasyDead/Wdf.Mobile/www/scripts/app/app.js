@@ -47,7 +47,10 @@
                             $location.path('/roster');
                         console.log('user is already logged in');
                         $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
-                        $rootScope.httpClient = $http;
+
+                        if ($rootScope.user.Configuration.ReceiveNotifications)
+                            $rootScope.setupPushNotification();
+
                     } catch (e) {
                         //reset and send home
                         localStorage.clear();
@@ -262,6 +265,7 @@
                             authorize(response.data);
                         }).catch(function (error) {
                             $rootScope.handleError(error);
+                            $rootScope.loggingIn = false;
                             $rootScope.showError('Could not log you into Twitter: Login servers had an issue. Please try again later.');
                         });
 
@@ -315,13 +319,13 @@
 
             $rootScope.destroyPushSetup = function () {
                 $http.get($rootScope.fdApi + 'api/person/push/cancel').then(function (response) {
-
+                    $rootScope.saveUserChanges();
                 }).catch($rootScope.handleError);
             };
 
             var pushOpts = {
                 android: {
-                    senderID: '231469866429'
+                    senderID: '20690878081'
                 }
             };
 
@@ -337,6 +341,7 @@
                             $http.put($rootScope.fdApi + 'api/person/push/register', pushReq).then(function (response) {
                                 $rootScope.user.PushRegistration = data.registrationId;
                                 $rootScope.user.ReceiveNotifications = true;
+                                $rootScope.saveUserChanges();
                             }).catch($rootScope.handleError);
                         });
                         pN.on('error', function (e) {
@@ -345,6 +350,11 @@
 
                         pN.on('notification', function (data) {
                             console.log(data);
+
+                            $rootScope.notificationMsg = data.message;
+                            if (!$scope.$digest) $scope.$apply();
+
+                            $('#pushModal').modal();
                         });
                     }
                 });

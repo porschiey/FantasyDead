@@ -32,14 +32,18 @@
                 $location.path('/roster');
             };
 
-
+            //checks to see if the username is valid
             $scope.checkingUsername = true;
             $scope.usernameValid = false;
             $scope.checkUsername = function () {
                 $scope.checkingUsername = true;
 
+
                 var alphaNumericReg = /[^\w ]/i;
-                if ($scope.user.Username.length > 20 || $scope.user.Username.length < 3 || alphaNumericReg.test($scope.user.Username)) {
+                if ($scope.user.Username === null
+                    || $scope.user.Username.length > 20
+                    || $scope.user.Username.length < 3
+                    || alphaNumericReg.test($scope.user.Username)) {
                     $scope.usernameMsg = 'Username must be between 3 and 20 characters, must be alphanumeric. Underscores "_" and spaces are allowed.';
                     $scope.checkingUsername = false;
                     $scope.usernameValid = false;
@@ -62,20 +66,20 @@
             $scope.emailValid = false;
             $scope.checkEmail = function () {
                 var em = $rootScope.user.Email;
+                if (em === null)
+                    return false;
                 $scope.emailValid = (em !== '' && (em.indexOf('@') !== -1 && em.indexOf('.') !== -1));
             };
 
-
+            //Finalizes registration, starts tutorial messages
             $scope.tutorialStep2 = function () {
 
                 $rootScope.user.Role = 0;
                 $rootScope.user.isNewUser = false;
-                $rootScope.saveUserChanges();
-
-                $http.post($rootScope.fdApi + 'api/person/config/username', $rootScope.user.Username).then(function (response) {
-                }).catch($rootScope.handleError);
-
-                $http.post($rootScope.fdApi + 'api/person/config/email', $rootScope.user.Email).then(function (response) {
+              
+                var req = { Email: $rootScope.user.Email, Username: $rootScope.user.Username };
+                $http.post($rootScope.fdApi + 'api/person/email', req).then(function (response) {
+                    $rootScope.saveUserChanges();
                 }).catch($rootScope.handleError);
 
                 $scope.tutorialStep2MessageLoop();
@@ -83,6 +87,7 @@
             };
 
 
+            //tutorial loop tech
             var updateMsg = function (img, msg, contWith, delay) {
                 $('#tutorial-text').fadeOut(250, function () {
                     $('#tutorial-text').text(msg);
@@ -118,13 +123,19 @@
                 mPos++;
             };
 
+            //starts the actual tutorial loop
             $scope.tutorialStep2MessageLoop = function () {
                 setTimeout(cycle, 2000);
             };
 
 
+            //toggle the configuration for notifications on score completion
+            $scope.toggleNotifyWhenScored = function () {
+                $rootScope.user.Configuration.NotifyWhenScored = !$rootScope.user.Configuration.NotifyWhenScored;
+                $scope.updateConfiguration('NotifyWhenScored', $rootScope.user.Configuration.NotifyWhenScored);
+            };
 
-            //toggling notifications.
+            //toggling notifications all up
             $scope.toggleNotifications = function () {
 
                 $rootScope.user.Configuration.ReceiveNotifications = !$rootScope.user.Configuration.ReceiveNotifications;
@@ -135,8 +146,10 @@
                 else {
                     $rootScope.destroyPushSetup();
                 }
+
             };
 
+            //uploading an avatar
             $rootScope.uploadImage = function (file, folder, contWith) {
                 var uploadUrl = $rootScope.fdApi + 'api/configuration/image/' + folder;
                 var fd = new FormData();
@@ -177,6 +190,7 @@
             };
 
 
+            //primary init method
             $scope.init = function () {
                 if ($rootScope.user.isNewUser) {
                     $scope.tutorial = true;
@@ -186,6 +200,7 @@
                 }
             };
 
+            //minor object setup
             $scope.preLockHours = [
                 { hours: 1, d: '1 Hour Before' },
                 { hours: 2, d: '2 Hours Before' },
@@ -197,9 +212,10 @@
                 { hours: 72, d: '72 Hours Before' }
             ];
 
-
+            //fires configuration change to api
             $scope.updateConfiguration = function (key, value) {
                 $http.post($rootScope.fdApi + 'api/person/config/' + key, value).then(function (response) {
+                    $rootScope.saveUserChanges();
                 }).catch(function (error) {
                     $rootScope.handleError(error);
                     $rootScope.showError(error);
