@@ -30,9 +30,18 @@
 
         public string PushNotificationData { get; set; }
 
-        public int Role { get; set; } //0 = member, 1 = mod, 2 = admin, -1 = banned
+        public int Role { get; set; } //0 = member, 1 = NewUser, 2 = admin, -1 = banned
 
         public Dictionary<string, string> Configuration { get; set; }
+
+
+        public void StripCreds()
+        {
+            foreach (var cred in this.Identities)
+            {
+                cred.Credentials = string.Empty;
+            }
+        }
     }
 
 
@@ -54,7 +63,7 @@
     {
         Banned = -1,
         Member = 0,
-        Moderator = 1,
+        NewUser = 1,
         Admin = 2
     }
 

@@ -202,7 +202,9 @@
                 //validate file
                 if (folder == "avs")
                 {
-                    var img = System.Drawing.Image.FromStream(file.InputStream);
+                    Stream imgStream = new MemoryStream();
+                    file.InputStream.CopyTo(imgStream);
+                    var img = System.Drawing.Image.FromStream(imgStream);
                     if (img.Width > 200 || img.Height > 200)
                         return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "The avatar dimensions are too large.");
 
@@ -211,6 +213,12 @@
 
                     if (!acceptedExtensions.Contains(extension.ToLowerInvariant()))
                         return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, $"The file must be one of the following types: {string.Join(", ", acceptedExtensions)}");
+
+                    fileName = this.Requestor.PersonId;
+                    fullName = fileName + extension;
+                    imgStream.Dispose();
+
+                    file.InputStream.Position = 0; //to be read again            
                 }
 
 
@@ -222,7 +230,7 @@
                 var blockBlob = container.GetBlockBlobReference(fullName);
                 using (var stream = file.InputStream)
                 {
-                    blockBlob.UploadFromStream(stream);
+                    blockBlob.UploadFromStream(file.InputStream);
                 }
 
 

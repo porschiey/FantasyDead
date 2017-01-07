@@ -15,7 +15,7 @@
     /// <summary>
     /// Controller responsible for submitting events and calculating scores for users/characters/episodes.
     /// </summary>
-    [ApiAuthorization(requiredRole: (int)PersonRole.Moderator)]
+    [ApiAuthorization(requiredRole: (int)PersonRole.Admin)]
     public class EventController : ApiController
     {
 

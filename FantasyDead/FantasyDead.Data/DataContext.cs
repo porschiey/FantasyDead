@@ -70,7 +70,7 @@
         /// Adds a person(user)
         /// </summary>
         /// <param name="person"></param>
-        public async Task<DataContextResponse> Register(Person person)
+        public async Task<DataContextResponse> Register(Person person, bool continueDespiteUsername = false)
         {
             if (!person.Identities.Any())
                 throw new ArgumentException("Person has no identities to use.", nameof(person));
@@ -86,7 +86,7 @@
 
                 //username taken?
                 alreadyExistingPerson = this.GetPerson(this.GetPersonIdByUsername(person.Username));
-                if (alreadyExistingPerson != null)
+                if (alreadyExistingPerson != null && !continueDespiteUsername)
                     return DataContextResponse.Error(HttpStatusCode.Conflict, "That username is already taken.");
 
 

@@ -42,6 +42,7 @@
         public HttpResponseMessage Profile()
         {
             var person = this.db.GetPerson(this.Requestor.PersonId);
+            person.StripCreds();
             return this.Request.CreateResponse(HttpStatusCode.OK, person);
         }
 
@@ -55,6 +56,7 @@
         public HttpResponseMessage Profile(string id)
         {
             var person = this.db.GetPerson(id);
+            person.StripCreds();
             return this.Request.CreateResponse(HttpStatusCode.OK, person);
         }
 
@@ -69,16 +71,35 @@
         public async Task<HttpResponseMessage> UpdateConfiguration(string key, [FromBody] string value)
         {
             var person = this.db.GetPerson(this.Requestor.PersonId);
-            if (person.Configuration == null)
-                person.Configuration = new Dictionary<string, string>();
 
-            if (!person.Configuration.ContainsKey(key))
-                person.Configuration.Add(key, string.Empty);
+            if (key == "username")
+            {
+                if (person.Role != (int)PersonRole.NewUser)
+                    return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "You cannot change your username.");
 
-            person.Configuration[key] = value;
+                person.Role = (int)PersonRole.Member;
+                var alreadyExist = this.db.GetPersonIdByUsername(value);
+                if (alreadyExist != null)
+                    return this.Request.CreateErrorResponse(HttpStatusCode.Conflict, "That username is already taken.");
+
+                person.Username = value;
+            }
+            else if (key == "email")
+            {
+                person.Email = value;
+            }
+            else
+            {
+                if (person.Configuration == null)
+                    person.Configuration = new Dictionary<string, string>();
+
+                if (!person.Configuration.ContainsKey(key))
+                    person.Configuration.Add(key, string.Empty);
+
+                person.Configuration[key] = value;
+            }
 
             await this.db.UpdatePerson(person);
-
             return this.Request.CreateResponse(HttpStatusCode.OK);
         }
 
@@ -114,6 +135,15 @@
 
             var person = this.db.GetPerson(this.Requestor.PersonId);
             person.PushNotificationData = reg.RegistrationId;
+
+            if (person.Configuration == null)
+                person.Configuration = new Dictionary<string, string>();
+
+            if (!person.Configuration.ContainsKey("ReceiveNotifications"))
+                person.Configuration.Add("ReceiveNotifications", true.ToString());
+            else
+                person.Configuration["ReceiveNotifications"] = true.ToString();
+
             await this.db.UpdatePerson(person);
 
             return this.Request.CreateResponse(HttpStatusCode.OK);
@@ -146,6 +176,7 @@
             }
 
             person.PushNotificationData = null;
+            person.Configuration["ReceiveNotifications"] = false.ToString();
             await this.db.UpdatePerson(person);
 
             return this.Request.CreateResponse(HttpStatusCode.OK);

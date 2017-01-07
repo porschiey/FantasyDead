@@ -1,0 +1,61 @@
+﻿<div class="home-landing">
+
+
+    <img src="images/newSiteLandingMtop.png" style="width: calc(100% + 30px); height: auto;" />
+    <div class="login-options">
+
+        <a class="btn btn-primary btn-lg" ng-click="getStarted()" ng-show="!loggingIn">
+            Get Started
+        </a>
+
+        <span ng-show="loggingIn">
+            <i class="fa fa-2x fa-spin fa-circle-o-notch"></i>
+        </span>
+    </div>
+    <div class="bottom-img"></div>
+
+
+</div>
+
+
+
+<div class="modal fade" id="loginModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Log in to The Fantasy Dead</h4>
+            </div>
+            <div class="modal-body text-center">
+                <p>
+                    <a class="btn btn-lg btn-primary btn-sized" ng-click="twitterLogin()">
+                        <i class="fa fa-twitter"></i>
+                        <span>Twitter</span>
+                    </a>
+                    <a class="btn btn-lg btn-primary btn-sized" ng-click="facebookLogin()">
+                        <i class="fa fa-facebook"></i>
+                        <span>Facebook</span>
+                    </a>
+                    <a class="btn btn-lg btn-primary btn-sized" ng-click="googleLogin()">
+                        <i class="fa fa-google"></i>
+                        <span>Google</span>
+                    </a>
+                    <a class="btn btn-lg btn-primary btn-sized" ng-click="microsoftLogin()">
+                        <i class="fa fa-windows"></i>
+                        <span>Microsoft</span>
+                    </a>
+                    <a class="btn btn-lg btn-primary btn-sized" ng-click="register()">
+                        <i class="fa fa-pencil"></i>
+                        <span>Email Address</span>
+                    </a>
+                </p>
+            </div>
+            <div class="modal-footer" style="text-align: left;">
+                If you've logged in before, we'll use your pre-existing account. If not, we'll create one!
+                <br />
+                <a href="http://thefantasydead.com/home/privacy"><i class="fa fa-lock"></i> Privacy</a><br />
+                <a href="http://thefantasydead.com/home/legal"><i class="fa fa-gavel"></i> Legal Disclaimer</a>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

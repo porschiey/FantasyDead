@@ -69,7 +69,7 @@
                 Username = req.Username,
                 Events = new List<CharacterEvent>(),
                 AvatarPictureUrl = string.Empty,
-                Role = (int)PersonRole.Member,
+                Role = (int)PersonRole.NewUser,
                 Email = req.Email,
                 Configuration = new Dictionary<string, string>()
             };
@@ -77,9 +77,9 @@
             return await this.CreatePerson(person);
         }
 
-        private async Task<HttpResponseMessage> CreatePerson(Person person)
+        private async Task<HttpResponseMessage> CreatePerson(Person person, bool continueDespiteUsername = false)
         {
-            var response = await this.db.Register(person);
+            var response = await this.db.Register(person, continueDespiteUsername);
 
             if (response.StatusCode != HttpStatusCode.Created)
             {
@@ -100,11 +100,13 @@
         /// <returns></returns>
         [HttpPut]
         [Route("api/register/login")]
-        public async Task<HttpResponseMessage> Login([FromBody] SocialIdentity id)
+        public async Task<HttpResponseMessage> Login([FromBody] SocialIdentity id, bool alreadyEncrypted = false)
         {
             try
             {
-                id.Credentials = this.crypto.Encrypt(id.Credentials);
+                if (!alreadyEncrypted)
+                    id.Credentials = this.crypto.Encrypt(id.Credentials);
+
                 var person = this.db.GetPersonBySocialId(id);
 
                 if (person == null)
@@ -152,7 +154,8 @@
                 PersonId = Guid.NewGuid().ToString(),
                 Configuration = new Dictionary<string, string>(),
                 Events = new List<CharacterEvent>(),
-                JoinedDate = DateTime.UtcNow
+                JoinedDate = DateTime.UtcNow,
+                Role = (int)PersonRole.NewUser
             };
             switch (req.Platform)
             {
@@ -161,8 +164,8 @@
                         var keys = req.Token.Split(',');
                         Tweetinvi.Auth.SetUserCredentials("EBJIutCaB6XiNvbGe6oexBYKf", "16XiJIz8j9KKFFNYeAkt5EZEMQqE5Rtc3tPBbFadnxR8VaGWzR", keys[0], keys[1]);
                         var twitterUser = Tweetinvi.User.GetAuthenticatedUser();
-
-                        user.AvatarPictureUrl = twitterUser.ProfileImageUrl;
+                        
+                        user.AvatarPictureUrl = twitterUser.ProfileImageUrlHttps;
                         user.Username = twitterUser.ScreenName;
                         user.Email = twitterUser.Email;
                         platId = twitterUser.IdStr;
@@ -242,9 +245,15 @@
                     }
             }
 
-            user.Identities.Add(new SocialIdentity { PlatformUserId = platId, PlatformName = req.Platform.ToString(), Credentials = req.Token, PersonId = user.PersonId });
+            var socialId = new SocialIdentity { PlatformUserId = platId, PlatformName = req.Platform.ToString(), Credentials = this.crypto.Encrypt(req.Token), PersonId = user.PersonId };
+            user.Identities.Add(socialId);
 
-            return await this.CreatePerson(user);
+            //login if already exists
+            var person = this.db.GetPersonBySocialId(socialId);
+            if (person != null)
+                return await this.Login(socialId, true);
+
+            return await this.CreatePerson(user, true);
         }
 
 
@@ -268,7 +277,7 @@
 
         private bool HasRegisteredTooManyTimes()
         {
-            var ip = this.Request.GetOwinContext().Request.LocalIpAddress;
+            var ip = System.Web.HttpContext.Current.Request.UserHostAddress;
 
             if (string.IsNullOrWhiteSpace(ip))
                 return false;

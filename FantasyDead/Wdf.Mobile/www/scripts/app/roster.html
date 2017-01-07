@@ -1,0 +1,12 @@
+﻿<div class="row sub-banner text-center">    
+    <div class="col-xs-6">        
+        <a ng-click="showing = 'current'" ng-class="{'banner-active': showing === 'current' }">Current Episode</a>
+    </div>
+    <div class="col-xs-6">
+        <a ng-click="showing = 'history'" ng-class="{'banner-active': showing === 'history' }">History</a>
+    </div>
+</div>
+<div class="sub-banner-spacer"></div>
+<h2>Roster here</h2>
+
+{{showing}}

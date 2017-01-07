@@ -1,0 +1,153 @@
+﻿<div class="tutorial-host" ng-show="tutorial">
+    <div class="container-fluid text-left" ng-show="tutorialPage === 1">
+        <h3 class="gray-header">WELCOME</h3>
+
+        <h4 style="color: #666;">This is you. Want to make any changes?</h4>
+
+        <div class="list-group">
+            <div class="list-group-item">
+                <div class="avatar-small" style="display: inline-block;">
+                    <img ng-show="!user.AvatarPictureUrl" src="images/noAv.png" />
+                    <img ng-show="user.AvatarPictureUrl" ng-src="{{user.AvatarPictureUrl}}" alt="{{user.Username}}'s avatar'">
+                </div>
+                <a ng-click="changeAvatar()"> Change Avatar</a>
+            </div>
+
+            <div class="list-group-item">
+                <b>Username</b> <br />
+                <input type="text" class="form-control" ng-model="user.Username"
+                       ng-change="checkUsername()" ng-model-options="{debounce: 250}" />
+                <div class="alert "
+                     ng-class="{'alert-danger': !usernameValid && !checkingUsername, 'alert-success': usernameValid && !checkingUsername}">
+
+                    <span ng-show="checkingUsername">
+                        <i class="fa fa-spin fa-circle-o-notch"></i>
+                    </span>
+                    <span ng-show="!checkingUsername">
+                        <i class="fa " ng-class="{'fa-close': !usernameValid, 'fa-check': usernameValid}"></i> &ensp;
+                        {{usernameMsg}}
+                    </span>
+                </div>
+            </div>
+            <div class="list-group-item">
+                <b>Email</b><br />
+                <input type="email" placeholder="someone@something.com" class="form-control" ng-model="user.Email" ng-change="checkEmail()" />
+                <div class="alert alert-danger" ng-show="!emailValid">
+                    Email is not valid.
+                </div>
+                <span class="help-block">
+                    We will not email you unless you specifically ask for it.
+                    <br /><a ng-click="showPrivacyModal()"> Read More</a>
+                </span>
+            </div>
+        </div>
+        <a class="btn btn-default btn-primary" ng-click="tutorialStep2()" ng-show="usernameValid && emailValid">Looking good</a> <br />
+        <span class="help-block">You can always change your avatar and email address later.</span>
+    </div>
+</div>
+
+<div class="container-fluid" ng-show="tutorialPage === 2">
+    <h3 class="gray-header">HOW IT WORKS</h3>
+
+    <br/>
+    <div class="text-center" style="width: 100%; font-size: 14pt;">
+        <span id="tutorial-text" style="display: none;">
+            Let's get started.
+        </span>        
+        <img id="tutorial-img" style="display:none;" />
+    </div>
+    <a class="btn btn-lg btn-primary" ng-click="nextPage()" style="display: none;" id="tutorial2Next">Got it</a>
+</div>
+
+<div class="modal fade bs-example-modal-sm" data-backdrop="static" tabindex="-1" role="dialog" id="avatarModal">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content avatar-modal">
+            <div ng-show="uploading">
+                <i class="fa fa-spin fa-circle-o-notch"></i> &ensp; Uploading to cloud...
+            </div>
+            <div ng-show="!uploading" style="width: 100%; text-align: center;">
+                <div ng-show="user.AvatarPictureUrl" style="width: 100%; text-align: center;">
+                    <div class="avatar-med">
+                        <img ng-src="{{user.AvatarPictureUrl}}" style="display: inline-block;" />
+                    </div>
+                    <br /><br />
+                    
+                    <span ng-show="!showUpload">
+                        <a ng-click="changeAvatar()" class="btn btn-default">Cancel</a> &ensp;
+                        <a ng-click="showUpload = true" class="btn btn-default btn-primary">Change</a>
+                    </span>
+                </div>
+
+                <div ng-show="showUpload || !user.AvatarPictureUrl" style="width: 100%; text-align: center;">
+                    <br />
+                    <input type="file" file-model="newImg" class="form-control" /> <br />
+                    <span class="help-block">
+                        Must be .jpg(.jpeg), .png, or .gif. Cannot exceed 1Mb in size. No larger than 200x200.
+                    </span>
+                    <br />
+                    <a ng-click="changeAvatar()" class="btn btn-default">Cancel</a> &ensp;
+                    <a class="btn btn-default btn-primary" ng-click="uploadFile()">
+                        Upload
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" ng-show="!tutorial">
+
+    <h4>
+        Profile
+    </h4>
+    <div class="settings-list">
+        <div class="list-group">
+            <p class="list-group-item disabled">
+                {{user.Username}}
+            </p>
+            <p class="list-group-item disabled">
+                {{user.Email}}
+            </p>
+            <a class="list-group-item" ng-click="avatarModal()">
+                Change Avatar
+                <span class="badge-clear">
+                    <img ng-src="{{user.Avatar}}" class="avatar-tiny" />
+                </span>
+            </a>
+            <a class="list-group-item" ng-click="logout()">Logout</a>
+        </div>
+    </div>
+    <div class="settings-spacer"></div>
+    <h4>Notifications</h4>
+    <div class="settings-list">
+        <div class="list-group">
+            <a class="list-group-item" ng-click="toggleNotifications()">
+                Receive Notifications
+                <span class="badge-clear" ng-class="{'badge-lit': user.Configuration.ReceiveNotifications}">
+                    <i class="fa fa-2x" ng-class="{'fa-toggle-on': user.Configuration.ReceiveNotifications, 'fa-toggle-off': !user.Configuration.ReceiveNotifications}"></i>
+                </span>
+            </a>
+            <p class="list-group-item">
+                Roster Lock Reminder<br />
+                <span class="helper-block">How much advance warning would you like?</span>
+                <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
+                        ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
+                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours)">
+                </select>
+            </p>
+        </div>
+    </div>
+    <div class="settings-spacer"></div>
+    <h4>Extras</h4>
+    <div class="settings-list">
+        <div class="list-group">
+            <a class="list-group-item" ng-click="openWebsite()">Contact / Support</a>
+            <a class="list-group-item" ng-click="showPrivacyModal()">Privacy</a>
+            <a class="list-group-item" ng-click="showDisclaimerModal()">Disclaimer</a>
+            <a class="list-group-item" ng-click="rateApp()">Rate this app</a>
+            <p class="list-group-item">Version 0.1</p>
+        </div>
+    </div>
+
+
+</div>
