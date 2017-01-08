@@ -9,6 +9,7 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Web.Http;
 
@@ -34,30 +35,30 @@
         /// 409 - character is already slotted or been used too many times
         /// </returns>
         [HttpPut]
-        [Route("api/roster/pick/show/{showId}/character/{characterId}/slot/{slotType}")]
-        public async Task<HttpResponseMessage> SetPick(string characterId, string showId, int slotType)
+        [Route("api/roster/pick")]
+        public async Task<HttpResponseMessage> SetPick([FromBody]PickRequest req)
         {
-            var character = (this.db.FetchCharacters(showId).Content as List<Character>).FirstOrDefault(c => c.Id == characterId);
+            var character = (this.db.FetchCharacters(req.ShowId).Content as List<Character>).FirstOrDefault(c => c.Id == req.CharacterId);
 
             if (character == null)
                 return this.Request.CreateErrorResponse(HttpStatusCode.NotFound, "Cannot slot character: they don't exist.");
 
             //currently open episode
-            var openEp = this.db.FetchNextAvailableEpisode(showId);
+            var openEp = this.db.FetchNextAvailableEpisode(req.ShowId);
             if (openEp == null)
                 return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "There is no currently open episode.");
 
             var epPick = new EpisodePick
             {
-                ShowId = showId,
+                ShowId = req.ShowId,
                 PersonId = this.Requestor.PersonId,
-                CharacterId = characterId,
+                CharacterId = req.CharacterId,
                 EpisodeId = openEp.Id,
-                SlotType = slotType,
+                SlotType = req.SlotType,
                 SlottedDate = DateTime.UtcNow
             };
 
-            var dbReponse = await this.db.PushEpisodePick(epPick);
+            var dbReponse = await this.db.PushEpisodePick(epPick, req.SwappingWithCharacterId);
 
             if (dbReponse.StatusCode != HttpStatusCode.OK)
                 return this.ConvertDbResponse(dbReponse);
@@ -69,11 +70,33 @@
                 CharacterPictureUrl = character.PrimaryImageUrl,
                 EpisodeId = openEp.Id,
                 Occupied = true,
-                DeathSlot = slotType == (int)SlotType.Death,
+                DeathSlot = req.SlotType == (int)SlotType.Death,
                 Id = Guid.NewGuid().ToString()
             };
 
             return this.Request.CreateResponse(HttpStatusCode.OK, slot);
+        }
+
+        /// <summary>
+        /// DELETE api/roster/pick
+        /// Removes a character from a slot for the current episode.
+        /// </summary>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("api/roster/pick/{id}")]
+        public async Task<HttpResponseMessage> RemovePick(string id)
+        {
+            var pickId = Encoding.UTF8.GetString(Convert.FromBase64String(id));
+
+            var response = await this.db.RemoveEpisodePick(pickId);
+            if (response.StatusCode != HttpStatusCode.OK)
+                return this.ConvertDbResponse(response);
+
+            var oldPick = response.Content as EpisodePick;
+            var empty = RosterSlot.Empty(oldPick.EpisodeId);
+            empty.DeathSlot = oldPick.SlotType == (int)SlotType.Death;
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, empty);
         }
 
         /// <summary>
@@ -140,26 +163,11 @@
 
             while (payload.Slots.Count(s => !s.DeathSlot) < classicSlots)
             {
-                payload.Slots.Add(new RosterSlot
-                {
-                    CharacterName = "Not Selected",
-                    Occupied = false,
-                    DeathSlot = false,
-                    CharacterPictureUrl = "images/slotEmpty.png",
-                    Id = Guid.NewGuid().ToString(),
-                    EpisodeId = payload.CurrentEpisode.Id
-                });
+                payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
             }
             while (payload.Slots.Count(s => s.DeathSlot) < deathSlots)
             {
-                payload.Slots.Add(new RosterSlot
-                {
-                    Occupied = false,
-                    DeathSlot = true,
-                    CharacterPictureUrl = "images/deathSlotEmpty.png",
-                    Id = Guid.NewGuid().ToString(),
-                    EpisodeId = payload.CurrentEpisode.Id
-                });
+                payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
             }
 
             return this.Request.CreateResponse(HttpStatusCode.OK, payload);

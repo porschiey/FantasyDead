@@ -263,6 +263,11 @@ div.avatar-small {
     position: relative;
 }
 
+img.portrait-small {
+    height: 50px;
+    width: 36px;
+}
+
 div.avatar-med {
     height: 150px;
     width: 150px;
@@ -329,8 +334,13 @@ h2.gray-header {
 
 div.front {
     display: inline-block;
-    width: 125px !important;
-    height: 175px !important;
+    width: 131px !important;
+    height: 181px !important;
+    text-align: center;
+}
+
+div.occupied {
+    border: 2px solid #9c661f;
 }
 
 
@@ -357,7 +367,12 @@ div.character-pane {
     width: 100%;
 }
 
-img.slot-img{
+img.slot-img {
     width: 125px;
     height: 175px;
+    display: inline-block;
+}
+
+.no-rounding {
+    border-radius: 0;
 }

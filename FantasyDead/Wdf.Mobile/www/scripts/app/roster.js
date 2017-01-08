@@ -74,9 +74,12 @@
 
                     $scope.eSlot = null;
                     setTimeout(function () {
+                        $scope.working = false;
+                        if (!$scope.$digest) $scope.$apply();
+
                         $('#charModal').modal('hide');
                         $('#' + slot.Id + ' .front').removeClass('flipOutY').addClass('flipInY');
-                    }, 500);
+                    }, 600);
 
                 }
             };
@@ -106,18 +109,40 @@
                 return results.length > 0;
             };
 
+            $scope.working = false;
+            $scope.removeChar = function (pickId) {
+                $scope.working = true;
+                var b64 = btoa(pickId);
+                $http.delete($rootScope.fdApi + 'api/roster/pick/' + b64).then(function (response) {
+                    var slotIx = findSlotIx($scope.eSlot.Id);
+                    $scope.slots[slotIx] = response.data;
+                    $scope.flipSlot($scope.slots[slotIx]);
+                }).catch(function (error) {
+                    $scope.flipSlot($scope.eSlot);
+                    $rootScope.handleError(error);
+                    $rootScope.showError(error);
+                    $scope.working = false;
+                });
+
+            };
+
             $scope.selectChar = function (ch) {
                 if (ch === null) {
-                    //unslot
                     return;
                 }
 
                 if ($scope.charIsSlotted(ch))
                     return;
 
+                $scope.working = true;
+
                 var slotType = $scope.eSlot.DeathSlot ? 1 : 0;
-                //api/roster/pick/show/{showId}/character/{characterId}/slot/{slotType}
-                $http.put($rootScope.fdApi + 'api/roster/pick/show/' + $scope.show.id + '/character/' + ch + '/slot/' + slotType, null)
+
+                var req = { CharacterId: ch, ShowId: $scope.show.id, SlotType: slotType };
+                if ($scope.eSlot !== null && $scope.eSlot.Pick != null)
+                    req.SwappingWithCharacterId = $scope.eSlot.Pick.CharacterId;
+
+                $http.put($rootScope.fdApi + 'api/roster/pick', req)
                 .then(function (response) {
                     var slotIx = findSlotIx($scope.eSlot.Id);
                     $scope.slots[slotIx] = response.data;
@@ -126,6 +151,7 @@
                     $scope.flipSlot($scope.eSlot);
                     $rootScope.handleError(error);
                     $rootScope.showError(error);
+                    $scope.working = false;
                 });
             };
 

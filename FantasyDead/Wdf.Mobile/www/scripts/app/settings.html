@@ -49,11 +49,11 @@
 <div class="container-fluid" ng-show="tutorialPage === 2">
     <h3 class="gray-header">HOW IT WORKS</h3>
 
-    <br/>
+    <br />
     <div class="text-center" style="width: 100%; font-size: 14pt;">
         <span id="tutorial-text" style="display: none;">
             Let's get started.
-        </span>        
+        </span>
         <img id="tutorial-img" style="display:none;" />
     </div>
     <a class="btn btn-lg btn-primary" ng-click="nextPage()" style="display: none;" id="tutorial2Next">Got it</a>
@@ -71,7 +71,7 @@
                         <img ng-src="{{user.AvatarPictureUrl}}" style="display: inline-block;" />
                     </div>
                     <br /><br />
-                    
+
                     <span ng-show="!showUpload">
                         <a ng-click="changeAvatar()" class="btn btn-default">Cancel</a> &ensp;
                         <a ng-click="showUpload = true" class="btn btn-default btn-primary">Change</a>
@@ -127,15 +127,14 @@
                     <i class="fa fa-2x" ng-class="{'fa-toggle-on': user.Configuration.ReceiveNotifications, 'fa-toggle-off': !user.Configuration.ReceiveNotifications}"></i>
                 </span>
             </a>
-            <p class="list-group-item">
+            <p class="list-group-item" ng-show="user.Configuration.ReceiveNotifications">
                 Roster Lock Reminder<br />
                 <span class="helper-block">How much advance warning would you like?</span>
                 <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
                         ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)">
-                </select>
+                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
             </p>
-            <a class="list-group-item" ng-click="toggleNotifyWhenScored()">
+            <a class="list-group-item" ng-click="toggleNotifyWhenScored()" ng-show="user.Configuration.ReceiveNotifications">
                 Notify when an episode is scored
                 <span class="badge-clear" ng-class="{'badge-lit': user.Configuration.NotifyWhenScored}">
                     <i class="fa fa-2x" ng-class="{'fa-toggle-on': user.Configuration.NotifyWhenScored, 'fa-toggle-off': !user.Configuration.NotifyWhenScored}"></i>

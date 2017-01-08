@@ -433,10 +433,21 @@
         /// <returns></returns>
         public async Task<DataContextResponse> RemoveEpisodePick(string pickId)
         {
+            //validate pick is not too old
+            var pick = (from pk in this.db.CreateDocumentQuery<EpisodePick>(picksColUri) where pk.Id == pickId select pk)
+                .ToList().FirstOrDefault();
+
+            if (pick == null)
+                return DataContextResponse.Error(HttpStatusCode.NotFound, "Roster slot could not be found.");
+
+            var openEp = this.FetchNextAvailableEpisode(pick.ShowId);
+            if (openEp == null || openEp.Id != pick.EpisodeId)
+                return DataContextResponse.Error(HttpStatusCode.Forbidden, "You cannot delete old roster slots.");
+
             try
             {
                 var op = await this.db.DeleteDocumentAsync(UriFactory.CreateDocumentUri(dbName, picksCol, pickId));
-                return DataContextResponse.Ok;
+                return new DataContextResponse { Content = pick, StatusCode = HttpStatusCode.OK };
             }
             catch (DocumentClientException dce)
             {
@@ -454,8 +465,10 @@
         /// </summary>
         /// <param name="pick"></param>
         /// <returns></returns>
-        public async Task<DataContextResponse> PushEpisodePick(EpisodePick pick)
+        public async Task<DataContextResponse> PushEpisodePick(EpisodePick pick, string swappingCharacterId = "")
         {
+
+
             ////// holy validation batman
 
             var allPicks = this.GetEpisodePicks(pick.PersonId).Content as List<EpisodePick>;
@@ -476,7 +489,7 @@
                 //if (death.FirstOrDefault()?.CharacterId == pick.CharacterId)
                 //    return DataContextResponse.Error(HttpStatusCode.Conflict, $"You already have this character slotted elsewhere.");
             }
-            else if (pick.SlotType == (int)SlotType.Classic)
+            else if (pick.SlotType == (int)SlotType.Classic && string.IsNullOrWhiteSpace(swappingCharacterId))
             {
                 var limit = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
                 if (classic.Count >= limit)
@@ -492,7 +505,19 @@
 
             try
             {
-                var doc = await this.db.CreateDocumentAsync(picksColUri, pick);
+                if (!string.IsNullOrWhiteSpace(swappingCharacterId))
+                {
+                    //swap, don't add
+                    var doc = currentPicks.FirstOrDefault(c => c.CharacterId == swappingCharacterId);
+                    if (doc == null)
+                        return DataContextResponse.Error(HttpStatusCode.BadRequest, "Cannot swap a character that you don't have slotted.");
+
+                    await this.db.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(dbName, picksCol, doc.Id), pick);
+                    return DataContextResponse.Ok;
+                }
+
+
+                await this.db.CreateDocumentAsync(picksColUri, pick);
                 return DataContextResponse.Ok;
             }
             catch (DocumentClientException dce)
