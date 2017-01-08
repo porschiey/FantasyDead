@@ -1,5 +1,43 @@
-﻿<div class="row sub-banner text-center">    
-    <div class="col-xs-6">        
+﻿<div class="modal animated " data-backdrop="static" tabindex="-1" role="dialog" id="charModal">
+    <div class="modal-dialog modal-sm" role="document" style="height: 80%;">
+        <div class="modal-content " style="height: 100%; padding: 5px;">
+
+            <h3 class="gray-header">CHARACTER SLOT</h3>
+
+            <div class="character-host">
+                <div class="character-pane">
+                    <table class="table table-striped">
+                        <tr ng-show="eSlot.Occupied" ng-click="selectChar(null)">
+                            <td colspan="2">
+                                <i class="fa fa-eraser"></i>
+                                Remove slotted character
+                            </td>
+                        </tr>
+                        <tr ng-repeat="ch in characters"
+                            ng-click="selectChar(ch.Id)"
+                            ng-class="{'disabled': charIsSlotted(ch.Id)}">
+                            <td>
+                                <div class="avatar-small" style="float: left;">
+                                    <img ng-src="{{ch.PrimaryImageUrl}}" />
+                                </div>
+                                {{ch.Name}}
+
+                            </td>
+                            <td>
+                                {{ch.TotalScore}}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <a ng-click="flipSlot(eSlot)" class="btn btn-default">Cancel</a>
+        </div>
+    </div>
+</div>
+
+
+<div class="row sub-banner text-center">
+    <div class="col-xs-6">
         <a ng-click="showing = 'current'" ng-class="{'banner-active': showing === 'current' }">Current Episode</a>
     </div>
     <div class="col-xs-6">
@@ -7,6 +45,34 @@
     </div>
 </div>
 <div class="sub-banner-spacer"></div>
-<h2>Roster here</h2>
 
-{{showing}}
+<div ng-show="!ready" class="text-center" style="width: 100%;">
+    <br /><br />
+    <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> Getting the latest, just for you...
+</div>
+
+<div ng-show="ready">
+    <div class="container-fluid text-center" ng-show="showing === 'current'" style="width: 100%">
+        <a class="btn btn-default" style="position: absolute; right: 0;" ng-click="init()">
+            <i class="fa fa-refresh"></i>
+        </a>
+    
+
+        <h2 class="gray-header">
+            {{episode.Name}}
+        </h2>
+
+        <div class="col-xs-6 slot-host" ng-repeat="slot in slots">
+
+            <div id="{{slot.Id}}">
+                <div class="front animated" ng-click="flipSlot(slot)">
+                    <img ng-src="{{slot.CharacterPictureUrl}}" class="slot-img"/>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="container-fluid" ng-show="showing === 'history'">
+
+</div>

@@ -212,7 +212,7 @@ div.sub-banner {
     font-size: 13pt;
     padding: 0;
     margin: 0;
-    z-index: 5555;
+    z-index: 1049;
 }
 
 div.sub-banner-spacer {
@@ -307,7 +307,7 @@ div.avatar-modal {
     padding: 10px;
 }
 
-div.notification-modal{
+div.notification-modal {
     text-align: center;
     padding: 15px;
     font-size: 14pt;
@@ -318,4 +318,46 @@ h3.gray-header {
     font-size: 18pt;
     font-weight: lighter;
     font-family: "Segoe UI";
+}
+
+h2.gray-header {
+    color: #5b5b5b;
+    font-size: 20pt;
+    font-weight: lighter;
+    font-family: "Segoe UI";
+}
+
+div.front {
+    display: inline-block;
+    width: 125px !important;
+    height: 175px !important;
+}
+
+
+
+div.slot-host {
+    display: inline-block !important;
+    position: relative;
+    margin: 10px 0;
+}
+
+div.character-host {
+    position: relative;
+    overflow-y: auto;
+    height: 80% !important;
+    min-height: 200px;
+    width: 100%;
+    display: inline-block;
+}
+
+div.character-pane {
+    position: absolute;
+    height: auto;
+    display: inline-block;
+    width: 100%;
+}
+
+img.slot-img{
+    width: 125px;
+    height: 175px;
 }

@@ -2,8 +2,10 @@
 {
     using Data;
     using Data.Documents;
+    using Models;
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -55,7 +57,23 @@
                 SlottedDate = DateTime.UtcNow
             };
 
-            return this.ConvertDbResponse(await this.db.PushEpisodePick(epPick));
+            var dbReponse = await this.db.PushEpisodePick(epPick);
+
+            if (dbReponse.StatusCode != HttpStatusCode.OK)
+                return this.ConvertDbResponse(dbReponse);
+
+            var slot = new RosterSlot
+            {
+                Pick = epPick,
+                CharacterName = character.Name,
+                CharacterPictureUrl = character.PrimaryImageUrl,
+                EpisodeId = openEp.Id,
+                Occupied = true,
+                DeathSlot = slotType == (int)SlotType.Death,
+                Id = Guid.NewGuid().ToString()
+            };
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, slot);
         }
 
         /// <summary>
@@ -69,6 +87,82 @@
         {
             var picks = this.db.GetEpisodePicks(this.Requestor.PersonId);
             return this.Request.CreateResponse(HttpStatusCode.OK, picks);
+        }
+
+        /// <summary>
+        /// GET api/roster/bulk
+        /// Fetches everything the roster page needs to use to populate.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/roster/bulk")]
+        public HttpResponseMessage Bulk()
+        {
+            var payload = new RosterPayload();
+            var picks = this.db.GetEpisodePicks(this.Requestor.PersonId).Content as List<EpisodePick>;
+
+            payload.RelatedShow = (this.db.FetchShowData().Content as List<Show>)[0]; //scoping down to first show for now
+
+            payload.Characters = (this.db.FetchCharacters(payload.RelatedShow.Id).Content as List<Character>)
+                .Where(c => c.DeadDateIso == null).ToList();
+
+            payload.CurrentEpisode = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
+
+            payload.Slots = new List<RosterSlot>();
+            foreach (var p in picks)
+            {
+                var slot = new RosterSlot
+                {
+                    DeathSlot = (p.SlotType == (int)SlotType.Death),
+                    Pick = p
+                };
+
+                var character = payload.Characters.FirstOrDefault(c => c.Id == p.CharacterId);
+                if (character == null)
+                {
+                    //bad selection, character has already died (likely),
+                    //needs to be revoked
+
+
+                    continue;
+                }
+
+                slot.CharacterName = character.Name;
+                slot.CharacterPictureUrl = character.PrimaryImageUrl;
+                slot.Occupied = true;
+                slot.EpisodeId = p.EpisodeId;
+                slot.Id = Guid.NewGuid().ToString();
+                payload.Slots.Add(slot);
+            }
+
+            var classicSlots = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
+            var deathSlots = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
+
+            while (payload.Slots.Count(s => !s.DeathSlot) < classicSlots)
+            {
+                payload.Slots.Add(new RosterSlot
+                {
+                    CharacterName = "Not Selected",
+                    Occupied = false,
+                    DeathSlot = false,
+                    CharacterPictureUrl = "images/slotEmpty.png",
+                    Id = Guid.NewGuid().ToString(),
+                    EpisodeId = payload.CurrentEpisode.Id
+                });
+            }
+            while (payload.Slots.Count(s => s.DeathSlot) < deathSlots)
+            {
+                payload.Slots.Add(new RosterSlot
+                {
+                    Occupied = false,
+                    DeathSlot = true,
+                    CharacterPictureUrl = "images/deathSlotEmpty.png",
+                    Id = Guid.NewGuid().ToString(),
+                    EpisodeId = payload.CurrentEpisode.Id
+                });
+            }
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, payload);
         }
     }
 }
