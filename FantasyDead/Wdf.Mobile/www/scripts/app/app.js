@@ -172,6 +172,8 @@
                 $location.path('/home');
             };
 
+
+
             //uses login data to authorize with fantasy dead api
             var authorize = function (token) {
 
@@ -186,17 +188,15 @@
 
                     $rootScope.saveUserChanges();
 
-
-
-                    if ($rootScope.user.isNewUser)
+                    if ($rootScope.user.isNewUser) {
                         $location.path('/settings');
+                        $rootScope.user.askNotify = true;
+                    }
                     else
                         $location.path('/roster');
 
                     if (!$rootScope.$$phase)
                         $rootScope.$digest();
-
-
 
                 }).catch(function (error) {
                     $rootScope.loggingIn = false;
@@ -359,6 +359,52 @@
                     }
                 });
             };
+
+
+            //toggle the configuration for notifications on score completion
+            $rootScope.toggleNotifyWhenScored = function () {
+                $rootScope.user.Configuration.NotifyWhenScored = !$rootScope.user.Configuration.NotifyWhenScored;
+                $rootScope.updateConfiguration('NotifyWhenScored', $rootScope.user.Configuration.NotifyWhenScored);
+            };
+
+            //toggling notifications all up
+            $rootScope.toggleNotifications = function (force) {
+
+                $rootScope.user.Configuration.ReceiveNotifications = !$rootScope.user.Configuration.ReceiveNotifications;
+
+                if (typeof force === typeof true)
+                    $rootScope.user.Configuration.ReceiveNotifications = force;
+
+                if ($rootScope.user.Configuration.ReceiveNotifications) {
+                    $rootScope.setupPushNotification();
+                }
+                else {
+                    $rootScope.destroyPushSetup();
+                }
+
+            };
+
+            //fires configuration change to api
+            $rootScope.updateConfiguration = function (key, value) {
+                $http.post($rootScope.fdApi + 'api/person/config/' + key, value).then(function (response) {
+                    $rootScope.saveUserChanges();
+                }).catch(function (error) {
+                    $rootScope.handleError(error);
+                    $rootScope.showError(error);
+                });
+            };
+
+            //minor object setup
+            $rootScope.preLockHours = [
+                { hours: 1, d: '1 Hour Before' },
+                { hours: 2, d: '2 Hours Before' },
+                { hours: 4, d: '4 Hours Before' },
+                { hours: 6, d: '6 Hours Before' },
+                { hours: 12, d: '12 Hours Before' },
+                { hours: 24, d: '24 Hours Before' },
+                { hours: 48, d: '48 Hours Before' },
+                { hours: 72, d: '72 Hours Before' }
+            ];
         });
     }]);
 })();

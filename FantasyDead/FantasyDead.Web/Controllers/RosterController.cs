@@ -93,8 +93,9 @@
                 return this.ConvertDbResponse(response);
 
             var oldPick = response.Content as EpisodePick;
-            var empty = RosterSlot.Empty(oldPick.EpisodeId);
-            empty.DeathSlot = oldPick.SlotType == (int)SlotType.Death;
+            var empty = oldPick.SlotType == (int)SlotType.Death 
+             ? RosterSlot.EmptyDeath(oldPick.EpisodeId)
+             : RosterSlot.Empty(oldPick.EpisodeId);
 
             return this.Request.CreateResponse(HttpStatusCode.OK, empty);
         }
@@ -126,8 +127,9 @@
 
             payload.RelatedShow = (this.db.FetchShowData().Content as List<Show>)[0]; //scoping down to first show for now
 
-            payload.Characters = (this.db.FetchCharacters(payload.RelatedShow.Id).Content as List<Character>)
-                .Where(c => c.DeadDateIso == null).ToList();
+            var characters = this.db.FetchCharacters(payload.RelatedShow.Id).Content as List<Character>;
+
+            payload.Characters = characters.Where(c => c.DeadDateIso == null).ToList();
 
             payload.CurrentEpisode = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
 
@@ -149,6 +151,7 @@
 
                     continue;
                 }
+                character.Usage++;
 
                 slot.CharacterName = character.Name;
                 slot.CharacterPictureUrl = character.PrimaryImageUrl;

@@ -35,6 +35,8 @@
         public string ShowId { get; set; }
 
         public string PrimaryImageUrl { get; set; }
+
+        public int Usage { get; set; }
     }
 
     public class CharacterDto : Character

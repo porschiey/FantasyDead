@@ -261,6 +261,7 @@ div.avatar-small {
     width: 50px;
     border-radius: 25px;
     position: relative;
+    border-radius: 12.5px;
 }
 
 img.portrait-small {
@@ -281,7 +282,8 @@ div.avatar-med {
     }
 
 div.avatar-tiny img {
-    border-radius: 12.5px;
+    height: 100%;
+    width: auto;
 }
 
 div.avatar-small img {
@@ -327,8 +329,8 @@ h3.gray-header {
 
 h2.gray-header {
     color: #5b5b5b;
-    font-size: 20pt;
-    font-weight: lighter;
+    font-size: 18pt;
+    font-weight: bold;
     font-family: "Segoe UI";
 }
 
@@ -348,7 +350,8 @@ div.occupied {
 div.slot-host {
     display: inline-block !important;
     position: relative;
-    margin: 10px 0;
+    padding: 10px 0;
+    border: 1px solid #e7e7e7;
 }
 
 div.character-host {
@@ -375,4 +378,12 @@ img.slot-img {
 
 .no-rounding {
     border-radius: 0;
+}
+
+span.character-name {
+    font-size: 14pt;
+}
+
+.btn-default-borded {
+    border: 1px solid #e7e7e7;
 }

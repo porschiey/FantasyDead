@@ -49,7 +49,7 @@
 
                         $('#charModal').on('hidden.bs.modal', function (evt) {
                             $('#charModal').removeClass(animOutClass)
-                        })
+                        });
                     }, 0);
 
                 }).catch(function (error) {
@@ -147,12 +147,43 @@
                     var slotIx = findSlotIx($scope.eSlot.Id);
                     $scope.slots[slotIx] = response.data;
                     $scope.flipSlot($scope.slots[slotIx]);
+
+                    if ($rootScope.user.askNotify) {
+                        //if (true) {
+                        $scope.askNotifyStep = 1;
+                        $('#askNotify').modal();
+                        $rootScope.user.askNotify = false;
+                    }
+
                 }).catch(function (error) {
                     $scope.flipSlot($scope.eSlot);
                     $rootScope.handleError(error);
                     $rootScope.showError(error);
                     $scope.working = false;
                 });
+            };
+
+            $scope.setupNotify = function () {
+                $rootScope.toggleNotifications(true);
+                $scope.askNotifyStep = 2;
+            };
+
+            $scope.updateDeadlineHours = function (key, value) {
+                $rootScope.updateConfiguration(key, value);
+
+                $scope.bailAskNotify(0);
+            };
+
+            $scope.bailAskNotify = function (step) {
+
+                $scope.askNotifyStep = step;
+                setTimeout(function () {
+                    $('#askNotify').removeClass('fadeInDown').addClass('hinge');
+                    setTimeout(function () {
+                        $('#askNotify').removeClass('hinge').addClass('fadeInDown');
+                        $('#askNotify').modal('hide');
+                    }, 2500);
+                }, 3000);
             };
 
             $scope.init();

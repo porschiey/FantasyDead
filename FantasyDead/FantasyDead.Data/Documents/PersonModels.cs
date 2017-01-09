@@ -45,7 +45,7 @@
                 AvatarPictureUrl = this.AvatarPictureUrl,
                 TotalScore = this.TotalScore,
                 Email = this.Email,
-                Identities = this.Identities,
+                Identities = new List<SocialIdentity>(),
                 Events = this.Events,
                 JoinedDate = this.JoinedDate,
                 PushNotificationData = this.PushNotificationData,
@@ -54,9 +54,15 @@
             };
 
 
-            foreach (var cred in p.Identities)
+            foreach (var cred in this.Identities)
             {
-                cred.Credentials = string.Empty;
+                var id = new SocialIdentity
+                {
+                    PlatformName = cred.PlatformName,
+                    PlatformUserId = cred.PlatformUserId,
+                    PersonId = cred.PersonId,
+                };
+                p.Identities.Add(id);
             }
 
             return p;

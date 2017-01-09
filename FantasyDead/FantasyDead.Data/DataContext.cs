@@ -120,6 +120,7 @@
             if (person.Identities[0].Credentials == "")
             {
                 var CULPRIT = 0;
+                throw new InvalidOperationException("Credentials can't be null when updating.");
             }
 
             try
