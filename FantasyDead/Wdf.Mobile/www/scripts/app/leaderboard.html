@@ -1,0 +1,64 @@
+﻿<div class="row sub-banner text-center">
+    <div class="col-xs-6">
+        <a ng-click="toggleLb('all')" ng-class="{'banner-active': showing === 'all' }">Global</a>
+    </div>
+    <div class="col-xs-6">
+        <a ng-click="toggleLb('friends')" ng-class="{'banner-active': showing === 'friends' }">Friends</a>
+    </div>
+</div>
+<div class="sub-banner-spacer"></div>
+
+<div class="leaderboard-host">
+    <div ng-show="!leaderboardReady" class="text-center" style="width: 100%;">
+        <br /><br />
+        <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> Crunching numbers...
+    </div>
+
+    <div ng-show="leaderboardReady">
+
+        <table class="table table-responsive table-striped table-condensed">
+            <tr>
+                <th>
+                    Rank
+                </th>
+                <th style="width: 150px;">
+                    Username
+                </th>
+                <th ng-if="leaderboard[0].EpisodeScores.length > 1">
+                    {{ twoWeeksAgoName | limitTo: 5 }}
+                </th>
+                <th>
+                    {{ lastWeekName | limitTo: 5 }}
+                </th>
+                <th style="width: 80px;">
+                    Total
+                </th>
+            </tr>
+
+            <tr ng-repeat="i in leaderboard | orderBy: 'CurrentRank'">
+
+                <td class="lbCell">
+                    <span ng-if="i.deltaIcon !== ''">
+                        <i class="fa {{i.deltaIcon}}"></i>
+                    </span>
+                    {{i.CurrentRank}}
+                </td>
+                <td>
+                    <div class="avatar-tiny">
+                        <img ng-src="{{i.AvatarUrl}}" />
+                    </div>
+                    {{i.Username}}
+                </td>
+                <td ng-if="i.EpisodeScores.length > 1">
+                    {{i.EpisodeScores[1].EpisodeScore | number}}
+                </td>
+                <td class="lbCell">
+                    {{i.EpisodeScores[0].EpisodeScore | number}}
+                </td>
+                <td class="lbCell">
+                    <b>{{i.TotalScore | number}}</b>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

@@ -249,8 +249,8 @@ span.badge-lit {
 }
 
 div.avatar-tiny {
-    height: 25px;
-    width: 25px;
+    height: 30px;
+    width: 30px;
     display: inline-block;
     line-height: 30px;
     position: relative;
@@ -261,7 +261,7 @@ div.avatar-small {
     width: 50px;
     border-radius: 25px;
     position: relative;
-    border-radius: 12.5px;
+    border-radius: 15px;
 }
 
 img.portrait-small {
@@ -386,4 +386,10 @@ span.character-name {
 
 .btn-default-borded {
     border: 1px solid #e7e7e7;
+}
+
+
+td.lbCell {
+    height: 30px !important;
+    line-height: 30px !important;
 }

@@ -21,6 +21,7 @@
                     $scope.slots = [];
                     $scope.history = [];
                     $scope.episode = response.data.CurrentEpisode;
+                    $rootScope.episodes = response.data.AllEpisodes;
 
                     $.each(allSlots, function (ix, i) {
 

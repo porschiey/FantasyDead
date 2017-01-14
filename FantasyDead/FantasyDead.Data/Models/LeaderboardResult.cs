@@ -8,7 +8,7 @@ namespace FantasyDead.Data.Models
 {
     public class LeaderboardResult
     {
-        public List<Person> People { get; set; }
+        public List<LeaderboardItem> Items { get; set; }
 
         public string ContinuationToken { get; set; }
     }

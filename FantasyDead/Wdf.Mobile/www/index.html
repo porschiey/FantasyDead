@@ -30,6 +30,7 @@
     <script type="text/javascript" src="scripts/app/roster.js"></script>
     <script type="text/javascript" src="scripts/app/home.js"></script>
     <script type="text/javascript" src="scripts/app/settings.js"></script>
+    <script type="text/javascript" src="scripts/app/leaderboard.js"></script>
     <script type="text/javascript" src="scripts/app/app.js"></script>
 
 </head>
@@ -100,16 +101,22 @@
 
             <div class="list-group">
                 <a href="#/roster" class="list-group-item" ng-class="{'active': path === 'stats'}">
-                    <h4 class="list-group-item-heading">
-                        <img ng-src="{{user.Avatar}}" class="avatar-small" style="float: left; margin-right: 10px;" />
-                        {{user.Username}}
-                    </h4>
+
+                    <div class="avatar-small" style="float: left; margin-right: 10px;">
+                        <img ng-src="{{user.AvatarPictureUrl}}" />
+                    </div>
+                    <b>{{user.Username}}</b>
+
                     <p class="list-group-item-text">
                         {{ user.TotalScore | number }} points
                     </p>
                 </a>
+                <a href="#/leaderboard" class="list-group-item" ng-class="{'active': path === 'leaderboard'}">
+                    <i class="fa fa-list"></i> Leaderboard
+                </a>
+
                 <a href="#/stats" class="list-group-item" ng-class="{'active': path === 'stats'}">
-                    <i class="fa fa-bar-chart"></i> Statistics
+                    <i class="fa fa-bar-chart"></i> Stats
                 </a>
 
                 <a href="#/community" class="list-group-item" ng-class="{'active': path === 'community'}">

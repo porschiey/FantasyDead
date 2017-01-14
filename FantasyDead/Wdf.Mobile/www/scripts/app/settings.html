@@ -46,18 +46,6 @@
     </div>
 </div>
 
-<div class="container-fluid" ng-show="tutorialPage === 2">
-    <h3 class="gray-header">HOW IT WORKS</h3>
-
-    <br />
-    <div class="text-center" style="width: 100%; font-size: 14pt;">
-        <span id="tutorial-text" style="display: none;">
-            Let's get started.
-        </span>
-        <img id="tutorial-img" style="display:none;" />
-    </div>
-    <a class="btn btn-lg btn-primary" ng-click="nextPage()" style="display: none;" id="tutorial2Next">Got it</a>
-</div>
 
 <div class="modal fade bs-example-modal-sm" data-backdrop="static" tabindex="-1" role="dialog" id="avatarModal">
     <div class="modal-dialog modal-sm" role="document">
@@ -109,10 +97,10 @@
                 {{user.Email}}
             </a>
             <a class="list-group-item" ng-click="changeAvatar()">
-                Change Avatar
-                <div class="badge-clear avatar-tiny">
+                <div class="avatar-tiny" style="float: right;">
                     <img ng-src="{{user.AvatarPictureUrl}}" />
                 </div>
+                Change Avatar                
             </a>
             <a class="list-group-item" ng-click="logout()">Logout</a>
         </div>

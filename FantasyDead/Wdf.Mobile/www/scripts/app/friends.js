@@ -1,13 +1,13 @@
 ﻿(function () {
-    var app = angular.module('wdf.stats', ['ngRoute']);
+    var app = angular.module('wdf.friends', ['ngRoute']);
 
-    app.controller('statsController', ['$scope', '$rootScope', '$location', '$http', function ($scope, $rootScope, $location, $http) {
+    app.controller('friendsController', ['$scope', '$rootScope', '$location', '$http', function ($scope, $rootScope, $location, $http) {
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
-            //init page
+            //init page   
             $scope.init = function () {
-
+         
             };
 
 

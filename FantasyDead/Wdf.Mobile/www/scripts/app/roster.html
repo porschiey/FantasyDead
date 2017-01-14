@@ -145,4 +145,19 @@
 </div>
 <div class="container-fluid" ng-show="showing === 'history'">
 
+    <div class="list-group">
+        <div class="list-group-item" ng-repeat="ep in episodes">
+            <b>
+                {{ep.Name}}
+            </b>
+
+            <table class="table table-condensed table-responsive">
+                <tr ng-repeat="slot in history | filter: {EpisodeId: ep.id}">
+                    <td>
+                        {{slot.CharacterName}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
 </div>

@@ -30,7 +30,7 @@
 
         public string Description { get; set; }
 
-        public int TotalScore { get; set; }
+        public double TotalScore { get; set; }
 
         public string ShowId { get; set; }
 

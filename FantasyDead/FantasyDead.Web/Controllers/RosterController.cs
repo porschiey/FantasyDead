@@ -133,6 +133,8 @@
 
             payload.CurrentEpisode = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
 
+            payload.AllEpisodes = (this.db.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes).ToList();
+
             payload.Slots = new List<RosterSlot>();
             foreach (var p in picks)
             {
@@ -164,11 +166,11 @@
             var classicSlots = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
             var deathSlots = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
 
-            while (payload.Slots.Count(s => !s.DeathSlot) < classicSlots)
+            while (payload.Slots.Where(s=>s.EpisodeId == payload.CurrentEpisode.Id).Count(s => !s.DeathSlot) < classicSlots)
             {
                 payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
             }
-            while (payload.Slots.Count(s => s.DeathSlot) < deathSlots)
+            while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => s.DeathSlot) < deathSlots)
             {
                 payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
             }

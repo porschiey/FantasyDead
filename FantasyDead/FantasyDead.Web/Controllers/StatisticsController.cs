@@ -8,6 +8,7 @@ namespace FantasyDead.Web.Controllers
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Threading.Tasks;
     using System.Web.Http;
 
 
@@ -80,12 +81,12 @@ namespace FantasyDead.Web.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("api/statistics/leaderboard/all/")]
-        public HttpResponseMessage Leaderboard(string contToken = "")
+        public async Task<HttpResponseMessage> Leaderboard(string contToken = "")
         {
             if (string.IsNullOrWhiteSpace(contToken))
                 contToken = null;
 
-            var lb = this.db.Leaderboard(contToken);
+            var lb = await this.db.Leaderboard(contToken);
 
             return this.Request.CreateResponse(HttpStatusCode.OK, lb);
         }

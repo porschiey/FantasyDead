@@ -16,5 +16,7 @@ namespace FantasyDead.Web.Models
         public Show RelatedShow { get; set; }
 
         public Episode CurrentEpisode { get; set; }
+
+        public List<Episode> AllEpisodes { get; set; }
     }
 }

@@ -115,7 +115,7 @@
                 var epId = episode.Id; //re-assigning scope-locally for no amazing reason other than sanity
 
                 //fetch event definition data
-                var allCharacters = this.db.FetchCharacters(episode.ShowId);
+                var allCharacters = this.db.FetchCharacters(episode.ShowId).Content as List<Character>;
 
                 //fetch all events for episode
                 var events = this.db.FetchEventsForEpisode(epId);
@@ -184,6 +184,15 @@
                         }
                         users[personId].AddRange(characterEventsThisEpisode); //add character events to that user                     
                     }
+
+                    //calculate character points
+                    Task.Run(() =>
+                    {
+                        var allCharEvents = this.db.FetchEventsForCharacter(characterId);
+                        var ch = allCharacters.First(c => c.Id == characterId);
+                        ch.TotalScore = allCharEvents.Sum(e => e.Points);
+                        this.db.UpsertConfigurationItem(ch);
+                    });
 
                     var prog = this.GetProgress(calcId) + (int)Math.Round(aggChunk);
                     this.UpdateProgress(calcId, prog);

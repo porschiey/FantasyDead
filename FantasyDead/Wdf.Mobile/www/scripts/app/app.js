@@ -4,7 +4,7 @@
 
     var loginOptions = { redirect_uri: 'https://thefantasydead.com/callback' };
 
-    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings']);
+    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings', 'wdf.leaderboard', 'wdf.stats', 'wdf.friends']);
 
     app.directive('fileModel', ['$parse', function ($parse) {
         return {
@@ -25,8 +25,8 @@
     app.run(['$rootScope', '$cordovaOauth', '$location', '$http', function ($rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
-            //$rootScope.fdApi = 'http://192.168.1.2/';
-            $rootScope.fdApi = 'https://thefantasydead.com/';
+            $rootScope.fdApi = 'http://192.168.1.2/';
+            //$rootScope.fdApi = 'https://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -46,16 +46,18 @@
                         else
                             $location.path('/roster');
                         console.log('user is already logged in');
+                        console.log('user...: ' + JSON.stringify($rootScope.user));
                         $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
-                        if ($rootScope.user.Configuration.ReceiveNotifications)
-                            $rootScope.setupPushNotification();
-
                     } catch (e) {
+                        console.error(JSON.stringify(e));
                         //reset and send home
                         localStorage.clear();
                         $location.path('/home');
                     }
+
+                    if ($rootScope.user.Configuration.ReceiveNotifications)
+                        $rootScope.setupPushNotification();
                 }
 
                 $rootScope.deviceReady = true;
@@ -72,6 +74,50 @@
                 }
 
                 if (!$rootScope.$$phase) $rootScope.$digest();
+            };
+     
+
+            $rootScope.destroyPushSetup = function () {
+                $http.get($rootScope.fdApi + 'api/person/push/cancel').then(function (response) {
+                    $rootScope.saveUserChanges();
+                }).catch($rootScope.handleError);
+            };
+
+            var pushOpts = {
+                android: {
+                    senderID: '20690878081'
+                }
+            };
+
+            $rootScope.setupPushNotification = function () {
+
+                PushNotification.hasPermission(function (perm) {
+                    if (perm.isEnabled) {
+                        var pN = PushNotification.init(pushOpts);
+
+                        pN.on('registration', function (data) {
+
+                            var pushReq = { device: 'android', registrationId: data.registrationId };
+                            $http.put($rootScope.fdApi + 'api/person/push/register', pushReq).then(function (response) {
+                                $rootScope.user.PushRegistration = data.registrationId;
+                                $rootScope.user.ReceiveNotifications = true;
+                                $rootScope.saveUserChanges();
+                            }).catch($rootScope.handleError);
+                        });
+                        pN.on('error', function (e) {
+                            console.error(e.message);
+                        });
+
+                        pN.on('notification', function (data) {
+                            console.log(data);
+
+                            $rootScope.notificationMsg = data.message;
+                            if (!$scope.$digest) $scope.$apply();
+
+                            $('#pushModal').modal();
+                        });
+                    }
+                });
             };
 
             init();
@@ -90,6 +136,11 @@
         {
             templateUrl: 'scripts/app/roster.html',
             controller: 'rosterController'
+        })
+              .when('/leaderboard',
+        {
+            templateUrl: 'scripts/app/leaderboard.html',
+            controller: 'leaderboardController'
         })
         .when('/settings/',
         {
@@ -136,6 +187,22 @@
                 }
 
                 $('#errorModal').modal();
+            };
+
+            $rootScope.findEpisodeById = function (id) {
+
+                if (!$rootScope.episodes)
+                    return null;
+
+                var ep = null;
+                $.each($rootScope.episodes, function (ix, i) {
+                    if (i.id === id) {
+                        ep = i;
+                        return false;
+                    }
+                });
+
+                return ep;
             };
 
             //toggles.. the menu!
@@ -317,48 +384,7 @@
                 localStorage.setItem('user', JSON.stringify($rootScope.user));
             };
 
-            $rootScope.destroyPushSetup = function () {
-                $http.get($rootScope.fdApi + 'api/person/push/cancel').then(function (response) {
-                    $rootScope.saveUserChanges();
-                }).catch($rootScope.handleError);
-            };
 
-            var pushOpts = {
-                android: {
-                    senderID: '20690878081'
-                }
-            };
-
-            $rootScope.setupPushNotification = function () {
-
-                PushNotification.hasPermission(function (perm) {
-                    if (perm.isEnabled) {
-                        var pN = PushNotification.init(pushOpts);
-
-                        pN.on('registration', function (data) {
-
-                            var pushReq = { device: 'android', registrationId: data.registrationId };
-                            $http.put($rootScope.fdApi + 'api/person/push/register', pushReq).then(function (response) {
-                                $rootScope.user.PushRegistration = data.registrationId;
-                                $rootScope.user.ReceiveNotifications = true;
-                                $rootScope.saveUserChanges();
-                            }).catch($rootScope.handleError);
-                        });
-                        pN.on('error', function (e) {
-                            console.error(e.message);
-                        });
-
-                        pN.on('notification', function (data) {
-                            console.log(data);
-
-                            $rootScope.notificationMsg = data.message;
-                            if (!$scope.$digest) $scope.$apply();
-
-                            $('#pushModal').modal();
-                        });
-                    }
-                });
-            };
 
 
             //toggle the configuration for notifications on score completion

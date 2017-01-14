@@ -144,6 +144,9 @@
         public async void AddEventsToPerson(List<CharacterEvent> events, string personId)
         {
             var person = this.GetPerson(personId);
+            if (person == null)
+                return;
+
             person.Events.AddRange(events);
             person.TotalScore = person.Events.Sum(e => e.Points);
             await this.UpdatePerson(person);
@@ -157,6 +160,9 @@
         public async Task RevokeEventsFromPerson(string fromEpisodeId, string personId)
         {
             var person = this.GetPerson(personId);
+            if (person == null)
+                return;
+
             person.Events = person.Events.Where(e => e.EpisodeId != fromEpisodeId).ToList();
             person.TotalScore = person.Events.Sum(e => e.Points);
             await this.UpdatePerson(person);
@@ -254,14 +260,14 @@
         /// </summary>
         /// <param name="ids"></param>
         /// <returns></returns>
-        public List<Person> GetPeopleByList(List<string> ids)
+        public async Task<LeaderboardResult> GetPeopleByList(List<string> ids)
         {
             var arr = $"['{string.Join("','", ids)}']";
             var people = this.db.CreateDocumentQuery<Person>(this.peopleColUri,
-                $"select * from people p where array_contains({arr}, p.Username)");
+                $"select * from people p where array_contains({arr}, p.Username)").AsDocumentQuery();
 
-            var result = people.ToList();
-            return result;
+            var result = await people.ExecuteNextAsync<Person>();
+            return this.GenerateLeaderboard(result);
         }
 
         /// <summary>
@@ -283,11 +289,59 @@
 
             var result = await q.ExecuteNextAsync<Person>();
 
-            var pageResult = new LeaderboardResult
+            return this.GenerateLeaderboard(result);
+        }
+
+        private LeaderboardResult GenerateLeaderboard(FeedResponse<Person> result)
+        {
+            var pageResult = new LeaderboardResult { ContinuationToken = result.ResponseContinuation, Items = new List<LeaderboardItem>() };
+
+            var current = this.FetchNextAvailableEpisode();
+
+            var episodes = (this.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes)
+                .Where(e=>e.Id != current.Id)
+                .ToList();
+
+            foreach (var p in result)
             {
-                People = result.ToList(),
-                ContinuationToken = result.ResponseContinuation
-            };
+                var lbItem = new LeaderboardItem { PersonId = p.Id, AvatarUrl = p.AvatarPictureUrl, Username = p.Username, EpisodeScores = new List<LeaderboardEpisodeItem>() };
+                
+                lbItem.EpisodeScores = episodes.Select(ep => new LeaderboardEpisodeItem { EpisodeId = ep.Id, EpisodeName = ep.Name, EpisodeScore = 0, EpisodeDate = ep.AirDate }).ToList();
+                string mostRecentEpId = null;
+                if (lbItem.EpisodeScores.Count > 1)
+                    mostRecentEpId = lbItem.EpisodeScores.Last().EpisodeId;
+
+                foreach (var ev in p.Events)
+                {
+                    //treat episode list as KvP
+                    var epAe = lbItem.EpisodeScores.First(e => e.EpisodeId == ev.EpisodeId);
+                    epAe.EpisodeScore += ev.Points;
+
+                    if (!string.IsNullOrWhiteSpace(mostRecentEpId) && mostRecentEpId != ev.EpisodeId)
+                        lbItem.PreviousEpScore += ev.Points;
+                }
+
+                lbItem.EpisodeScores = lbItem.EpisodeScores.OrderByDescending(e => e.EpisodeDate).ToList();
+
+
+                pageResult.Items.Add(lbItem);
+            }
+
+
+            var lastWeekOrder = pageResult.Items.OrderByDescending(i => i.PreviousEpScore).ToList();
+
+            for (var k = 0; k < lastWeekOrder.Count; k++)
+            {
+                lastWeekOrder[k].PreviousRank = k + 1;
+            }
+
+            pageResult.Items = pageResult.Items.OrderByDescending(i => i.TotalScore).ToList();
+
+            for (var k = 0; k < pageResult.Items.Count; k++)
+            {
+                var i = pageResult.Items[k];
+                pageResult.Items[k].CurrentRank = k + 1;
+            }
 
             return pageResult;
         }
@@ -302,10 +356,12 @@
         /// Retrieves the current episode that is open for selection.
         /// </summary>
         /// <returns>Can return null, if no episode is available.</returns>
-        public Episode FetchNextAvailableEpisode(string showId)
+        public Episode FetchNextAvailableEpisode(string showId = "")
         {
-            var show = (this.FetchShowData().Content as List<Show>).FirstOrDefault(s => s.Id == showId);
-            if (show == null) return null;
+            var sd = (this.FetchShowData().Content as List<Show>);
+            var show = sd.FirstOrDefault(s => s.Id == showId);
+            if (show == null)
+                show = sd.FirstOrDefault();
 
             var today = DateTime.UtcNow;
             var allEpisodes = show.Seasons.SelectMany(s => s.Episodes);
