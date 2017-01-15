@@ -114,6 +114,21 @@
 
 
         /// <summary>
+        /// GET api/person/friend/search/{s}
+        /// Searches for a person by their username, returns a collection of potential results.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/person/friend/search/{s}")]
+        public async Task<HttpResponseMessage> Search(string s)
+        {
+            var people = await this.db.SearchPeople(s);
+
+            return this.ConvertDbResponse(people);
+        }
+
+        /// <summary>
         /// PUT api/person/friend/{personId}
         /// Adds a friend to the requestor's friends list.
         /// </summary>

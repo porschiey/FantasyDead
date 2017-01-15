@@ -109,6 +109,30 @@
         }
 
         /// <summary>
+        /// Searches for folks.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public async Task<DataContextResponse> SearchPeople(string s)
+        {
+            s = s.Trim().ToLowerInvariant();
+            var queryStr = $"select p.id, p.AvatarPictureUrl, p.Username, p.TotalScore from people p where contains(lower(p.Username), '{s}')";
+
+            var options = new FeedOptions
+            {
+                MaxItemCount = 100
+            };
+
+            var q = this.db.CreateDocumentQuery<Person>
+                (this.peopleColUri, queryStr, options)
+                .AsDocumentQuery();
+
+            var result = await q.ExecuteNextAsync<Person>();
+
+            return new DataContextResponse() { Content = result.ToList() };
+        }
+
+        /// <summary>
         /// Updates a person (user).
         /// </summary>
         /// <param name="person"></param>
@@ -264,7 +288,7 @@
         {
             var arr = $"['{string.Join("','", ids)}']";
             var people = this.db.CreateDocumentQuery<Person>(this.peopleColUri,
-                $"select * from people p where array_contains({arr}, p.Username)").AsDocumentQuery();
+                $"select * from people p where array_contains({arr}, p.id)").AsDocumentQuery();
 
             var result = await people.ExecuteNextAsync<Person>();
             return this.GenerateLeaderboard(result);
@@ -345,6 +369,7 @@
 
             return pageResult;
         }
+
 
         #endregion
 

@@ -100,7 +100,7 @@
                 <div class="avatar-tiny" style="float: right;">
                     <img ng-src="{{user.AvatarPictureUrl}}" />
                 </div>
-                Change Avatar                
+                <span style="height: 30px; line-height: 30px;">Change Avatar</span>
             </a>
             <a class="list-group-item" ng-click="logout()">Logout</a>
         </div>
@@ -118,7 +118,7 @@
             <p class="list-group-item" ng-show="user.Configuration.ReceiveNotifications">
                 Roster Lock Reminder<br />
                 <span class="helper-block">How much advance warning would you like?</span>
-                <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
+                <select id="pushRemindHours" ng-model="deadlineLockHours" style="height: 30px;"
                         ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
                         ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
             </p>

@@ -92,7 +92,7 @@
                             ng-change="updateDeadlineHours('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
                     <br/>
                     or &ensp;
-                    <a class="btn btn-default btn-default-borded" ng-click="bailAskNotify(step)">
+                    <a class="btn btn-default btn-default-borded" ng-click="bailAskNotify(0)">
                         I don't need it
                     </a>                    
                 </p>
@@ -113,7 +113,7 @@
 
 <div ng-show="!ready" class="text-center" style="width: 100%;">
     <br /><br />
-    <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> Getting the latest, just for you...
+    <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> {{loadingText}}
 </div>
 
 <div ng-show="ready">

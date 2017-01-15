@@ -269,6 +269,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\LeaderboardContinue.cs" />
     <Compile Include="Models\PickRequest.cs" />
     <Compile Include="Models\PushRequest.cs" />
     <Compile Include="Models\RegistrationRequest.cs" />

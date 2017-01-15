@@ -5,19 +5,23 @@
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
-
-            $scope.lbPage = 1;
             $scope.leaderboard = [];
             $scope.showing = 'all';
+            $scope.fetching = false;
             //fetches a new leaderboar page
             $scope.getLeaderboardPage = function (contToken) {
-                $scope.leaderboardReady = false;
+                $scope.fetching = true;
                 var path = 'api/statistics/leaderboard/' + $scope.showing;
-                if (contToken)
-                    path += '?contToken=' + contToken;
 
-                $http.get($rootScope.fdApi + path).then(function (response) {
+                var tok = { Token: contToken };
+                $http.post($rootScope.fdApi + path, tok).then(function (response) {
+
+                    var rankMod = $scope.leaderboard.length;
                     $.each(response.data.Items, function (ix, i) {
+
+                        i.CurrentRank += rankMod;
+                        i.PreviousRank += rankMod;
+
                         i.deltaIcon = '';
                         if (i.CurrentRank > i.PreviousRank)
                             i.deltaIcon = 'fa-caret-down';
@@ -33,6 +37,8 @@
                         $scope.leaderboard.push(i);
                     });
 
+                    $scope.lbContToken = response.data.ContinuationToken;
+                    $scope.fetching = false;
                     $scope.leaderboardReady = true;
                 }).catch(function (error) {
                     $rootScope.handleError(error);
@@ -42,27 +48,19 @@
             };
 
 
-            //fetches initial statistics 
-            $scope.getLandingStats = function () {
-
-                $scope.statsReady = true;
-            };
-
             $scope.toggleLb = function (mode) {
                 $scope.leaderboard = [];
+                $scope.lbContToken = null;
+                $scope.leaderboardReady = false;
                 $scope.showing = mode;
                 $scope.getLeaderboardPage();
             }
 
             //init page
             $scope.leaderboardReady = false;
-            $scope.statsReady = false;
             $scope.init = function () {
                 //fetch leaderboard
                 $scope.getLeaderboardPage();
-
-                //fetch landing stats
-                $scope.getLandingStats();
             };
 
 

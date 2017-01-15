@@ -11,7 +11,7 @@
             $scope.ready = false;
             $scope.init = function () {
                 $scope.ready = false;
-
+                $scope.loadingText = $scope.rosterLoadText();
                 $http.get($rootScope.fdApi + 'api/roster/bulk').then(function (response) {
 
                     $scope.characters = response.data.Characters;
@@ -149,8 +149,8 @@
                     $scope.slots[slotIx] = response.data;
                     $scope.flipSlot($scope.slots[slotIx]);
 
-                    if ($rootScope.user.askNotify) {
-                        //if (true) {
+                    //if ($rootScope.user.askNotify) {
+                    if (true) {
                         $scope.askNotifyStep = 1;
                         $('#askNotify').modal();
                         $rootScope.user.askNotify = false;
@@ -166,6 +166,7 @@
 
             $scope.setupNotify = function () {
                 $rootScope.toggleNotifications(true);
+                $rootScope.updateConfiguration('NotifyWhenScored', true);
                 $scope.askNotifyStep = 2;
             };
 
@@ -185,6 +186,15 @@
                         $('#askNotify').modal('hide');
                     }, 2500);
                 }, 3000);
+            };
+
+
+            $scope.rosterLoadText = function () {
+
+                var loadText = ['I wonder who you picked...', 'Loading roster...', 'Rostering your loader...', 'Thinking of a witty loading text...', 'Discovering character options...', 'Pondering possibility of a cure...', 'Fetching the humans you bet on...'];
+
+                var option = Math.floor(Math.random() * loadText.length);
+                return loadText[option];
             };
 
             $scope.init();

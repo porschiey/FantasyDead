@@ -25,8 +25,8 @@
     app.run(['$rootScope', '$cordovaOauth', '$location', '$http', function ($rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
-            $rootScope.fdApi = 'http://192.168.1.2/';
-            //$rootScope.fdApi = 'https://thefantasydead.com/';
+            //$rootScope.fdApi = 'http://192.168.1.2/';
+            $rootScope.fdApi = 'https://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -48,6 +48,10 @@
                         console.log('user is already logged in');
                         console.log('user...: ' + JSON.stringify($rootScope.user));
                         $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
+
+                        $rootScope.deadlineLockHours = null;
+                        if ($rootScope.user.Configuration.DeadlineReminderHours > 0)
+                            $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineReminderHours, d: $rootScope.user.Configuration.DeadlineReminderHours + ' hour(s) before' };
 
                     } catch (e) {
                         console.error(JSON.stringify(e));
@@ -75,7 +79,7 @@
 
                 if (!$rootScope.$$phase) $rootScope.$digest();
             };
-     
+
 
             $rootScope.destroyPushSetup = function () {
                 $http.get($rootScope.fdApi + 'api/person/push/cancel').then(function (response) {
@@ -146,6 +150,16 @@
         {
             templateUrl: 'scripts/app/settings.html',
             controller: 'settingsController'
+        })
+            .when('/friends',
+        {
+            templateUrl: 'scripts/app/friends.html',
+            controller: 'friendsController'
+        })
+            .when('/stats',
+        {
+            templateUrl: 'scripts/app/stats.html',
+            controller: 'statsController'
         });
 
 
@@ -253,6 +267,9 @@
                     $rootScope.user.loggedIn = true;
                     $rootScope.user.isNewUser = u.Role === 1;
 
+                    $rootScope.deadlineLockHours = null;
+                    if ($rootScope.user.Configuration.DeadlineLockHours > 0)
+                        $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineLockHours, d: $rootScope.user.Configuration.DeadlineLockHours + ' hour(s) before' };
                     $rootScope.saveUserChanges();
 
                     if ($rootScope.user.isNewUser) {

@@ -393,3 +393,7 @@ td.lbCell {
     height: 30px !important;
     line-height: 30px !important;
 }
+
+div.list-group-item-back{
+    display: none;
+}

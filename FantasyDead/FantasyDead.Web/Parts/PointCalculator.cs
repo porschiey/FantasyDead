@@ -4,6 +4,7 @@
     using Data.Configuration;
     using Data.Documents;
     using Data.Models;
+    using Newtonsoft.Json;
     using StackExchange.Redis;
     using System;
     using System.Collections.Concurrent;
@@ -210,6 +211,20 @@
                 episode.CalculationDate = DateTime.UtcNow;
                 this.db.UpsertEpisode(episode).Wait();
                 this.UpdateProgress(calcId, 100);
+
+
+                //clear leaderboard cache
+                var keysJson = this.cache.StringGet("lbKeys");
+                if ((string)keysJson == null)
+                    return;
+
+                var lbKeys = JsonConvert.DeserializeObject<List<string>>(keysJson);
+
+                foreach (var key in lbKeys)
+                {
+                    this.cache.KeyDelete(key);
+                }
+
             });
         }
 

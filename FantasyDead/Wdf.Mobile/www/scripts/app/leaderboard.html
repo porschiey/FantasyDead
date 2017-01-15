@@ -9,10 +9,7 @@
 <div class="sub-banner-spacer"></div>
 
 <div class="leaderboard-host">
-    <div ng-show="!leaderboardReady" class="text-center" style="width: 100%;">
-        <br /><br />
-        <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> Crunching numbers...
-    </div>
+
 
     <div ng-show="leaderboardReady">
 
@@ -49,7 +46,7 @@
                     </div>
                     {{i.Username}}
                 </td>
-                <td ng-if="i.EpisodeScores.length > 1">
+                <td ng-if="i.EpisodeScores.length > 1" class="lbCell">
                     {{i.EpisodeScores[1].EpisodeScore | number}}
                 </td>
                 <td class="lbCell">
@@ -60,5 +57,13 @@
                 </td>
             </tr>
         </table>
+
+        <div class="text-center container-fluid" ng-show="lbContToken">
+            <a ng-click="getLeaderboardPage(lbContToken)" class="btn btn-lg btn-default btn-default-borded">Load More</a>
+        </div>
+    </div>
+    <div ng-show="fetching" class="text-center" style="width: 100%;">
+        <br /><br />
+        <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br /> Getting the latest, just for you...
     </div>
 </div>

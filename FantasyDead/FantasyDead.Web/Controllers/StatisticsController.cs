@@ -3,6 +3,11 @@ namespace FantasyDead.Web.Controllers
 {
     using Data;
     using Data.Documents;
+    using Data.Models;
+    using Models;
+    using Newtonsoft.Json;
+    using Parts;
+    using StackExchange.Redis;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -19,6 +24,7 @@ namespace FantasyDead.Web.Controllers
     {
 
         private readonly DataContext db;
+        private readonly IDatabase cache;
 
         /// <summary>
         /// Default constructor.
@@ -26,6 +32,7 @@ namespace FantasyDead.Web.Controllers
         public StatisticsController()
         {
             this.db = new DataContext();
+            this.cache = RedisCache.Connection.GetDatabase();
         }
 
 
@@ -62,16 +69,16 @@ namespace FantasyDead.Web.Controllers
         /// Fetches the leaderboard for the requestor, based on their friends.
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
+        [HttpPost]
         [Route("api/statistics/leaderboard/friends")]
-        public HttpResponseMessage FriendLeaderboard()
+        public async Task<HttpResponseMessage> FriendLeaderboard()
         {
             var person = this.db.GetPerson(this.Requestor.PersonId);
 
             if (person.Friends == null)
                 return this.Request.CreateResponse(HttpStatusCode.OK, new List<Person>());
 
-            var lb = this.db.GetPeopleByList(person.Friends);
+            var lb = await this.db.GetPeopleByList(person.Friends);
             return this.Request.CreateResponse(HttpStatusCode.OK, lb);
         }
 
@@ -79,14 +86,42 @@ namespace FantasyDead.Web.Controllers
         /// GET api/statistics/leaderboard/all
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
+        [HttpPost]
         [Route("api/statistics/leaderboard/all/")]
-        public async Task<HttpResponseMessage> Leaderboard(string contToken = "")
+        public async Task<HttpResponseMessage> Leaderboard([FromBody] LeaderboardContinue contToken)
         {
-            if (string.IsNullOrWhiteSpace(contToken))
-                contToken = null;
+            string tok = null;
+            if (contToken?.Token != null)
+                tok = contToken.Token;
 
-            var lb = await this.db.Leaderboard(contToken);
+            var redisKey = tok == null ? "first" : tok;
+
+            if (this.cache.KeyExists(redisKey))
+            {
+                var cachedLbJson = this.cache.StringGet(redisKey);
+                var cachedLb = JsonConvert.DeserializeObject<LeaderboardResult>(cachedLbJson);
+                return this.Request.CreateResponse(cachedLb);
+            }
+
+            var lb = await this.db.Leaderboard(tok);
+
+            var cachedLbJsonNew = JsonConvert.SerializeObject(lb);
+            this.cache.StringSet(redisKey, cachedLbJsonNew);
+
+            //lb keys also into cache
+            await Task.Run(() =>
+            {
+                const string lbKeys = "lbKeys";
+                var keysJson = this.cache.StringGet(lbKeys);
+
+                var allKeys = ((string)keysJson == null) ? new List<string>() : JsonConvert.DeserializeObject<List<string>>(keysJson);
+
+                if (!allKeys.Contains(redisKey))
+                    allKeys.Add(redisKey);
+
+                keysJson = JsonConvert.SerializeObject(allKeys);
+                this.cache.StringSet(lbKeys, keysJson);
+            });
 
             return this.Request.CreateResponse(HttpStatusCode.OK, lb);
         }
