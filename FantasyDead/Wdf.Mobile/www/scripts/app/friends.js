@@ -6,9 +6,6 @@
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
             $scope.currentlyFlipped = null;
-            $scope.flip = function (id) {
-                $scope.currentlyFlipped = id;
-            };
 
             //search for a friend
             $scope.searching = false;
@@ -34,10 +31,24 @@
             //adds a friend
             $scope.addFriend = function (f) {
 
+                //check to see if already exists
+                var ae = false;
+                $.each($scope.friends, function (ix, i) {
+                    if (i.PersonId === f.PersonId) {
+                        ae = true;
+                        return false;
+                    }
+                });
+
+                if (ae) {
+                    $rootScope.showError('That user is already on your friends list.');
+                    return;
+                }
+
                 $scope.friends.push(f);
                 $scope.searchModal();
                 $http.put($rootScope.fdApi + 'api/person/friend/' + f.PersonId, null).then(function (response) {
-
+                    $scope.init();
                 }).catch(function (error) {
                     $rootScope.handleError(error);
                     $rootScope.showError(error);
@@ -61,7 +72,6 @@
             $scope.ready = false;
             //init page   
             $scope.init = function () {
-                $scope.ready = false;
                 $http.post($rootScope.fdApi + 'api/statistics/leaderboard/friends').then(function (response) {
                     $scope.friends = response.data.Items;
                     $scope.ready = true;

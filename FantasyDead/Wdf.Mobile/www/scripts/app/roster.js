@@ -6,16 +6,29 @@
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
+            var round = function (value, decimals) {
+                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+            };
+
             $scope.showing = 'current';
 
             $scope.ready = false;
             $scope.init = function () {
                 $scope.ready = false;
                 $scope.loadingText = $scope.rosterLoadText();
-                $http.get($rootScope.fdApi + 'api/roster/bulk').then(function (response) {
+                $http.get($rootScope.fdApi + 'api/roster/bulk/' + $rootScope.user.PersonId).then(function (response) {
 
+                    $scope.noun = response.data.Person.PersonId === $rootScope.user.PersonId ? 'You' : response.data.Person.Username;
                     $scope.characters = response.data.Characters;
                     $scope.show = response.data.RelatedShow;
+
+                    $scope.viewingUser = response.data.Person;
+
+                    $scope.score = $scope.generatePointValue($scope.viewingUser.TotalScore);
+
+                    if ($rootScope.user.PersonId === response.data.Person.PersonId) {
+                        $rootScope.user.TotalScore = response.data.Person.TotalScore;
+                    }
 
                     var allSlots = response.data.Slots;
                     $scope.slots = [];
@@ -23,14 +36,21 @@
                     $scope.episode = response.data.CurrentEpisode;
                     $rootScope.episodes = response.data.AllEpisodes;
 
+                    
                     $.each(allSlots, function (ix, i) {
 
                         if (i.EpisodeId === response.data.CurrentEpisode.id)
                             $scope.slots.push(i);
-
-                        else if (i.Occupied)
-                            $scope.history.push(i);
                     });
+
+                    $scope.history = [];
+                    $.each(response.data.History, function (ix, h) {
+                        h.score = $scope.generatePointValue(h.TotalScore);
+                        $scope.history.push(h);
+                    });
+
+                    $scope.gain = $scope.history[0].TotalScore;
+                    $scope.verb = $scope.gain > 0 ? 'gained' : 'lost';
 
                     $scope.ready = true;
 
@@ -60,6 +80,53 @@
                 });
 
             };
+
+            $scope.toggleShowing = function () {
+                $scope.showing = ($scope.showing === 'current') ? 'history' : 'current';
+            };
+
+            $scope.generatePointValue = function (raw) {
+
+                var str = '' + parseFloat(raw);
+                var parts = str.split('.');
+                var whole = parts[0];
+
+                var dec = parts.length === 1 ? '00' : '' + round(parseInt(parts[1]), 2);
+                return { whole: whole, dec: dec };
+            };
+
+
+            $scope.parseTimestamp = function (totalSeconds) {
+
+                if (totalSeconds < 60)
+                    return '00:' + totalSeconds;
+
+                var mins = Math.floor(totalSeconds / 60);
+                var secs = totalSeconds % 60;
+
+                var minsStr = mins > 9 ? '' + mins : '0' + mins;
+                var secStr = secs > 9 ? '' + secs : '0' + secs;
+                return minsStr + ':' + secStr;
+            };
+
+            //helper for roster
+            var findEpisodeById = function (id) {
+
+                if (!$rootScope.episodes)
+                    return null;
+
+                var ep = null;
+                $.each($rootScope.episodes, function (ix, i) {
+                    if (i.id === id) {
+                        ep = i;
+                        return false;
+                    }
+                });
+
+                return ep;
+            };
+
+
 
 
             //flips a card over

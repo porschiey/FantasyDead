@@ -67,7 +67,7 @@
                 Identities = new List<SocialIdentity>() { req.SocialIdentity },
                 JoinedDate = DateTime.UtcNow,
                 Username = req.Username,
-                Events = new List<CharacterEvent>(),
+                Events = new List<CharacterEventIndex>(),
                 AvatarPictureUrl = string.Empty,
                 Role = (int)PersonRole.NewUser,
                 Email = req.Email,
@@ -153,7 +153,7 @@
                 Identities = new List<SocialIdentity>(),
                 PersonId = Guid.NewGuid().ToString(),
                 Configuration = new PersonConfiguration(),
-                Events = new List<CharacterEvent>(),
+                Events = new List<CharacterEventIndex>(),
                 JoinedDate = DateTime.UtcNow,
                 Role = (int)PersonRole.NewUser
             };

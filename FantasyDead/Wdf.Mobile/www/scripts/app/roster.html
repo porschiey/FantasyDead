@@ -52,7 +52,7 @@
                 </p>
                 <p>
                     <b> Do you want to be notified when your points get updated?<br /></b>
-                   
+
                     <br />
                     <a class="btn btn-default btn-primary" ng-click="setupNotify()">
                         Yes, please!
@@ -67,7 +67,7 @@
                 <h2>You're all set</h2>
                 <p>
                     We'll let you get back to it. If you ever want to change these settings, you can in <a href="#/settings">Settings</a>.
-                    <br/>... Obviously.<br/>
+                    <br />... Obviously.<br />
                 </p>
 
             </div>
@@ -90,26 +90,26 @@
                     <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
                             ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
                             ng-change="updateDeadlineHours('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
-                    <br/>
+                    <br />
                     or &ensp;
                     <a class="btn btn-default btn-default-borded" ng-click="bailAskNotify(0)">
                         I don't need it
-                    </a>                    
+                    </a>
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row sub-banner text-center">
+<!--<div class="row sub-banner text-center">
     <div class="col-xs-6">
         <a ng-click="showing = 'current'" ng-class="{'banner-active': showing === 'current' }">Current Episode</a>
     </div>
     <div class="col-xs-6">
         <a ng-click="showing = 'history'" ng-class="{'banner-active': showing === 'history' }">History</a>
     </div>
-</div>
-<div class="sub-banner-spacer"></div>
+</div>-->
+<!--<div class="sub-banner-spacer"></div>-->
 
 <div ng-show="!ready" class="text-center" style="width: 100%;">
     <br /><br />
@@ -117,47 +117,104 @@
 </div>
 
 <div ng-show="ready">
-    <div class="container-fluid text-center" ng-show="showing === 'current'" style="width: 100%">
+    <div class="score-banner">
+        <h2 class="point-display">
+            {{score.whole | number}}<span class="decimal">.{{score.dec}} points</span>
+            <a class="btn btn-default btn-default-borded" ng-click="toggleShowing()" style="float: right;">
+
+                <span ng-show="showing === 'current'">
+                    <i class="fa fa-pie-chart"></i> Point Breakdown
+                </span>
+                <span ng-show="showing !== 'current'">
+                    <i class="fa fa-minus"></i> Hide Breakdown
+                </span>
+            </a>
+        </h2>
+
+        <br />
+
+        <span class="help-block" ng-show="gain !== 0 && showing === 'current'">
+            {{noun}} {{verb}} {{gain}} points last episode.
+        </span>
+
+    </div>
+    <div class="container-fluid" style="width: 100%">
         <a class="btn btn-default" style="position: absolute; right: 0;" ng-click="init()">
             <i class="fa fa-refresh"></i>
         </a>
 
+        <h3 class="gray-header" ng-show="showing === 'current'">
+            <span style="font-weight:bolder;">Roster:</span> {{episode.Name}}
+        </h3>
+        <div class="text-center" ng-show="showing === 'current'">
 
-        <h2 class="gray-header">
-            {{episode.Name}}
-        </h2>
 
-        <div class="col-xs-6 slot-host" ng-repeat="slot in slots">
+            <div class="col-xs-6 slot-host" ng-repeat="slot in slots">
 
-            <div id="{{slot.Id}}">
-                <div class="front animated flipInY" ng-click="flipSlot(slot)">
-                    <img ng-src="{{slot.CharacterPictureUrl}}" class="slot-img " ng-class="{'occupied': slot.Occupied}" />
-                    <span class="character-name">
+                <div id="{{slot.Id}}">
+                    <div class="front animated flipInY" ng-click="flipSlot(slot)">
+                        <img ng-src="{{slot.CharacterPictureUrl}}" class="slot-img " ng-class="{'occupied': slot.Occupied}" />
+                        <span class="character-name">
+                            <br />
+                            {{slot.CharacterName}}&ensp;
+
+                        </span>
+                    </div>
+                </div><!--- /slot -->
+            </div><!--- /slot host (repeat) -->
+        </div> <!--- /Current -->
+        <div class="container-fluid no-padding" ng-show="showing === 'history'">
+
+            <table class="table">
+                <tr ng-repeat="h in history">
+                    <td class="no-padding">
+                        <h3 class="point-display">
+                            <span style="font-weight: lighter;">{{h.EpisodeName}}</span> <br />
+                            {{h.score.whole | number}}<span class="decimal-h3">.{{h.score.dec}} points</span>
+                        </h3>
                         <br />
-                        {{slot.CharacterName}}&ensp;
+                        <table class="table table-condensed">
+                            <tbody ng-repeat="slot in h.Picks | filter: {EpisodeId: ep.id}">
+                                <tr ng-click="slot.expanded = !slot.expanded">
+                                    <td style="color: #9c661f; vertical-align: middle; font-size: 16pt;">
+                                        <i class="fa " ng-class="{'fa-plus': !slot.expanded, 'fa-minus': slot.expanded}"></i>
+                                    </td>
+                                    <td>
+                                        <img class="portrait-small" style="float: left;" ng-src="{{slot.CharacterPictureUrl}}" />
+                                        {{slot.CharacterName}}
+                                    </td>
+                                    <td>
+                                        {{slot.TotalScore}} points
+                                    </td>
+                                </tr>
+                                <tr class="row" ng-show="slot.expanded">
+                                    <td colspan="3">
+                                        <table class="table table-condensed smallest-text">
+                                            <tr ng-repeat="ev in slot.Events | orderBy: 'EpisodeTimestamp'">
 
-                    </span>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-<div class="container-fluid" ng-show="showing === 'history'">
-
-    <div class="list-group">
-        <div class="list-group-item" ng-repeat="ep in episodes">
-            <b>
-                {{ep.Name}}
-            </b>
-
-            <table class="table table-condensed table-responsive">
-                <tr ng-repeat="slot in history | filter: {EpisodeId: ep.id}">
-                    <td>
-                        {{slot.CharacterName}}
+                                                <td style="width: 50px;">
+                                                    {{parseTimestamp(ev.EpisodeTimestamp)}}
+                                                </td>
+                                                <td style="width: 50px;">
+                                                    {{ev.Points}} pts
+                                                </td>
+                                                <td>
+                                                    {{ev.Description}}
+                                                    <span ng-if="ev.Notes">
+                                                        <br />
+                                                        <b>Special Note:</b>
+                                                        <br />
+                                                        {{ev.Notes}}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                        </table>
                     </td>
                 </tr>
-            </table>
-        </div>
-    </div>
-</div>
+            </table><!--- /history list group -->
+        </div> <!--- /history -->
+    </div> <!--- /container -->
+</div> <!--- /roster ready -->

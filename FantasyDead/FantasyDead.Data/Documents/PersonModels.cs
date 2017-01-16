@@ -23,7 +23,7 @@
 
         public List<SocialIdentity> Identities { get; set; }
 
-        public List<CharacterEvent> Events { get; set; }
+        public List<CharacterEventIndex> Events { get; set; }
 
         [JsonConverter(typeof(DateTimeConvertor))]
         public DateTime JoinedDate { get; set; }

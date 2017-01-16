@@ -9,6 +9,8 @@ namespace FantasyDead.Web.Models
     public class RosterPayload
     {
 
+        public Person Person { get; set; }
+
         public List<RosterSlot> Slots { get; set; }
 
         public List<Character> Characters { get; set; }
@@ -17,6 +19,6 @@ namespace FantasyDead.Web.Models
 
         public Episode CurrentEpisode { get; set; }
 
-        public List<Episode> AllEpisodes { get; set; }
+        public List<HistoryItem> History { get; set; }
     }
 }

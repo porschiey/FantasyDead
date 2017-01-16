@@ -203,21 +203,7 @@
                 $('#errorModal').modal();
             };
 
-            $rootScope.findEpisodeById = function (id) {
-
-                if (!$rootScope.episodes)
-                    return null;
-
-                var ep = null;
-                $.each($rootScope.episodes, function (ix, i) {
-                    if (i.id === id) {
-                        ep = i;
-                        return false;
-                    }
-                });
-
-                return ep;
-            };
+     
 
             //toggles.. the menu!
             $rootScope.menuOpen = false;
@@ -451,3 +437,4 @@
         });
     }]);
 })();
+

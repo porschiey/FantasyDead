@@ -150,7 +150,7 @@
                 var affectedCharacters = events.Select(e => e.CharacterId).Distinct().ToList();
                 //reward points to users  
 
-                var users = new ConcurrentDictionary<string, List<CharacterEvent>>();
+                var users = new ConcurrentDictionary<string, List<CharacterEventIndex>>();
 
                 var aggChunk = 10.00 / picksDictionary.Count;
                 Parallel.ForEach(picksDictionary, (picks) =>
@@ -164,7 +164,7 @@
                         var personId = slot.PersonId;
                         if (!users.ContainsKey(personId))
                         {
-                            users.GetOrAdd(personId, new List<CharacterEvent>());
+                            users.GetOrAdd(personId, new List<CharacterEventIndex>());
 
                             if (episode.Calculated)
                             {
@@ -177,7 +177,7 @@
                         if (slot.SlotType == (int)SlotType.Death && characterEventsThisEpisode.Any(e => e.DeathEvent)) //is this a death slot, and did the character die?
                         {
                             var deathEvent = characterEventsThisEpisode.First(e => e.DeathEvent);
-                            var bonus = CharacterEvent.Copy(deathEvent);
+                            var bonus = CharacterEventIndex.Copy(deathEvent);
                             bonus.Points = 100;
                             bonus.Description = "Bonus points were awarded because this character was slotted to die.";
                             users[personId].Add(bonus);

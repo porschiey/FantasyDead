@@ -165,7 +165,7 @@
         /// </summary>
         /// <param name="events"></param>
         /// <param name="personId"></param>
-        public async void AddEventsToPerson(List<CharacterEvent> events, string personId)
+        public async void AddEventsToPerson(List<CharacterEventIndex> events, string personId)
         {
             var person = this.GetPerson(personId);
             if (person == null)

@@ -93,7 +93,7 @@
                 return this.ConvertDbResponse(response);
 
             var oldPick = response.Content as EpisodePick;
-            var empty = oldPick.SlotType == (int)SlotType.Death 
+            var empty = oldPick.SlotType == (int)SlotType.Death
              ? RosterSlot.EmptyDeath(oldPick.EpisodeId)
              : RosterSlot.Empty(oldPick.EpisodeId);
 
@@ -119,11 +119,15 @@
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("api/roster/bulk")]
-        public HttpResponseMessage Bulk()
+        [Route("api/roster/bulk/{personId}")]
+        public HttpResponseMessage Bulk(string personId)
         {
-            var payload = new RosterPayload();
-            var picks = this.db.GetEpisodePicks(this.Requestor.PersonId).Content as List<EpisodePick>;
+            var payload = new RosterPayload
+            {
+                Person = this.db.GetPerson(personId)
+            };
+
+
 
             payload.RelatedShow = (this.db.FetchShowData().Content as List<Show>)[0]; //scoping down to first show for now
 
@@ -131,48 +135,57 @@
 
             payload.Characters = characters.Where(c => c.DeadDateIso == null).ToList();
 
-            payload.CurrentEpisode = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
+            var currentEp = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
 
-            payload.AllEpisodes = (this.db.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes).ToList();
+            var episodes = (this.db.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes).ToList();
 
-            payload.Slots = new List<RosterSlot>();
-            foreach (var p in picks)
+            payload.History = HistoryItem.EstablishHistory(payload.Person.Events, episodes, characters);
+
+            if (this.Requestor.PersonId == personId)
             {
-                var slot = new RosterSlot
+                payload.CurrentEpisode = currentEp;
+
+                var picks = (this.db.GetEpisodePicks(personId).Content as List<EpisodePick>)
+                   .Where(p => p.EpisodeId == currentEp.Id);
+                payload.Slots = new List<RosterSlot>();
+                foreach (var p in picks)
                 {
-                    DeathSlot = (p.SlotType == (int)SlotType.Death),
-                    Pick = p
-                };
+                    var slot = new RosterSlot
+                    {
+                        DeathSlot = (p.SlotType == (int)SlotType.Death),
+                        Pick = p
+                    };
 
-                var character = payload.Characters.FirstOrDefault(c => c.Id == p.CharacterId);
-                if (character == null)
-                {
-                    //bad selection, character has already died (likely),
-                    //needs to be revoked
+                    var character = payload.Characters.FirstOrDefault(c => c.Id == p.CharacterId);
+                    if (character == null)
+                    {
+                        //bad selection, character has already died (likely),
+                        //needs to be revoked
 
+                        continue;
+                    }
+                    character.Usage++;
 
-                    continue;
+                    slot.CharacterName = character.Name;
+                    slot.CharacterPictureUrl = character.PrimaryImageUrl;
+                    slot.Occupied = true;
+                    slot.EpisodeId = p.EpisodeId;
+                    slot.Id = Guid.NewGuid().ToString();
+                    payload.Slots.Add(slot);
                 }
-                character.Usage++;
 
-                slot.CharacterName = character.Name;
-                slot.CharacterPictureUrl = character.PrimaryImageUrl;
-                slot.Occupied = true;
-                slot.EpisodeId = p.EpisodeId;
-                slot.Id = Guid.NewGuid().ToString();
-                payload.Slots.Add(slot);
-            }
 
-            var classicSlots = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
-            var deathSlots = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
+                var classicSlots = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
+                var deathSlots = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
 
-            while (payload.Slots.Where(s=>s.EpisodeId == payload.CurrentEpisode.Id).Count(s => !s.DeathSlot) < classicSlots)
-            {
-                payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
-            }
-            while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => s.DeathSlot) < deathSlots)
-            {
-                payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
+                while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => !s.DeathSlot) < classicSlots)
+                {
+                    payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
+                }
+                while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => s.DeathSlot) < deathSlots)
+                {
+                    payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
+                }
             }
 
             return this.Request.CreateResponse(HttpStatusCode.OK, payload);

@@ -61,5 +61,22 @@
 
         public new string EpisodeId => this.PartitionKey;
 
+        public static CharacterEventIndex Copy(CharacterEventIndex og)
+        {
+            return new CharacterEventIndex
+            {
+                ActionId = og.ActionId,
+                PartitionKey = og.PartitionKey,
+                RowKey = og.RowKey,
+                Points = og.Points,
+                Description = og.Description,
+                DeathEvent = og.DeathEvent,
+                EpisodeTimestamp = og.EpisodeTimestamp,
+                CharacterId = og.CharacterId,
+                Notes = og.Notes,
+                ShowId = og.ShowId,
+                ModifierId = og.ModifierId
+            };
+        }
     }
 }
