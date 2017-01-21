@@ -55,7 +55,7 @@
         [Route("api/person/{id}")]
         public HttpResponseMessage Profile(string id)
         {
-            var person = this.db.GetPerson(id);
+            var person = this.db.GetPerson(id, false);
             var stripped = person.StripCreds();
             return this.Request.CreateResponse(HttpStatusCode.OK, stripped);
         }

@@ -120,7 +120,7 @@
     <div class="score-banner">
         <h2 class="point-display">
             {{score.whole | number}}<span class="decimal">.{{score.dec}} points</span>
-            <a class="btn btn-default btn-default-borded" ng-click="toggleShowing()" style="float: right;">
+            <a class="btn btn-default btn-default-borded" ng-click="toggleShowing()" ng-if="isUser" style="float: right;">
 
                 <span ng-show="showing === 'current'">
                     <i class="fa fa-pie-chart"></i> Point Breakdown
@@ -133,7 +133,7 @@
 
         <br />
 
-        <span class="help-block" ng-show="gain !== 0 && showing === 'current'">
+        <span class="help-block" ng-show="gain !== 0">
             {{noun}} {{verb}} {{gain}} points last episode.
         </span>
 
@@ -148,6 +148,9 @@
         </h3>
         <div class="text-center" ng-show="showing === 'current'">
 
+        <span class="help-block" ng-if="episode === null">
+            Looks like there aren't any more episodes for now...
+        </span>
 
             <div class="col-xs-6 slot-host" ng-repeat="slot in slots">
 

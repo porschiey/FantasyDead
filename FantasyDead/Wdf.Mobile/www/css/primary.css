@@ -462,3 +462,9 @@ div.score-banner{
     margin: 10px;
     border: 1px solid #e7e7e7;
 }
+
+
+a.center-fixed{
+    width: 70%;
+    margin: 10px;
+}

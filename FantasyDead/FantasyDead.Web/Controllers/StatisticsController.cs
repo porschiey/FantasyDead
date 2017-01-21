@@ -73,12 +73,14 @@ namespace FantasyDead.Web.Controllers
         [Route("api/statistics/leaderboard/friends")]
         public async Task<HttpResponseMessage> FriendLeaderboard()
         {
-            var person = this.db.GetPerson(this.Requestor.PersonId);
+            var person = this.db.GetPerson(this.Requestor.PersonId, false);
 
             if (person.Friends == null)
                 return this.Request.CreateResponse(HttpStatusCode.OK, new List<Person>());
 
-            var lb = await this.db.GetPeopleByList(person.Friends);
+            var ids = person.Friends;
+            ids.Add(person.PersonId);
+            var lb = await this.db.GetPeopleByList(ids);
             return this.Request.CreateResponse(HttpStatusCode.OK, lb);
         }
 

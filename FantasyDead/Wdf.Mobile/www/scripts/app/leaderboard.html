@@ -1,4 +1,93 @@
-﻿<div class="row sub-banner text-center">
+﻿<div class="modal animated flipInY" tabindex="-1" role="dialog" id="friendModal">
+    <div class="modal-dialog modal-sm" role="document" style="height: 90%;">
+        <div class="modal-content " style="padding: 15px; font-size: 12pt;">
+
+            <h2>Find a friend</h2>
+            <span class="help-block">
+                Adding a friend to your list will not necessarily add you to their list. It's more of a follow system.
+            </span>
+
+            <input type="text" class="form-control" ng-model="friendSearch" placeholder="username"
+                   ng-change="search()" ng-model-options="{debounce: 500}" />
+
+            <br /><br />
+
+            <div ng-show="searching || friendWork" class="text-center container-fluid">
+                <i class="fa fa-2x fa-spin fa-circle-o-notch"></i>
+            </div>
+
+            <div ng-show="searchResults.length === 0" class="text-center container-fluid">
+                No results...
+            </div>
+
+            <div class="container-fluid" ng-show="searchResults.length > 0 && !friendWork">
+                <div ng-repeat="f in searchResults" class="btn btn-default btn-lg btn-default-borded" style="width: 70%; display: inline-block; margin: 10px;">
+                    <div class="avatar-tiny" style="float: left;">
+                        <img ng-src="{{f.AvatarPictureUrl}}" />
+                    </div>
+                    <span style="float: left;">&ensp;{{f.Username}}</span>
+                    <span style="float: right; font-size: 9pt;" ng-show="isAFriend(f.PersonId)">
+                        Already Added
+                    </span>
+                    <a ng-click="addFriend(f)" ng-show="!isAFriend(f.PersonId)" style="float: right;" class="btn btn-default btn-default-borded">
+                        <i class="fa fa-plus"></i> Add
+                    </a>
+                </div>
+            </div>
+
+            <br />
+            <a ng-click="searchModal()" class="btn btn-default btn-default-borded">
+                Cancel
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="modal animated flipInY" tabindex="-1" role="dialog" id="optionsModal">
+    <div class="modal-dialog modal-sm" role="document" style="height: 90%;">
+        <div class="modal-content text-center" style="padding: 15px; font-size: 12pt;">
+            <div class="avatar-med">
+                <img ng-src="{{options.person.AvatarUrl}}" style="display: inline-block;" ng-show="options.person.AvatarUrl !== ''" />
+            </div>
+
+            <h2 style="margin: 0; padding: 0; margin-bottom: 5px;">
+                {{options.person.Username}}
+            </h2>
+            <h3 class="point-display">
+                {{options.score.whole | number}}<span class="decimal">.{{options.score.dec}} points</span>
+            </h3>
+            <br /><br />
+
+            <div ng-if="options.person.PersonId === user.PersonId">
+                This is you. Hopefully you already knew that.
+            </div>
+            <div ng-if="options.person.PersonId !== user.PersonId">
+                <a ng-click="view(options.person.PersonId)" class="btn btn-default btn-default-borded btn-lg center-fixed">
+                    <i class="fa fa-eye"></i> View
+                </a>
+
+                <a ng-click="addFriend(options.person)" ng-show="!options.isAFriend &&!friendWork" class="btn btn-default btn-default-borded btn-lg center-fixed">
+                    <i class="fa fa-user-plus"></i> Add Friend
+                </a>
+
+                <a ng-click="removeFriend(options.person.PersonId)" ng-show="options.isAFriend &&!friendWork" class="btn btn-default btn-default-borded btn-lg center-fixed">
+                    <i class="fa fa-user-times"></i> Remove Friend
+                </a>
+
+            </div>
+
+            <div ng-show="friendWork">
+                <i class="fa fa-spin fa-circle-o-notch"></i>
+            </div>
+            <a ng-click="hideOptions()" class="btn btn-default btn-default-borded btn-lg center-fixed">
+                <i class="fa fa-times"></i> Close
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<div class="row sub-banner text-center">
     <div class="col-xs-6">
         <a ng-click="toggleLb('all')" ng-class="{'banner-active': showing === 'all' }">Global</a>
     </div>
@@ -41,10 +130,12 @@
                     {{i.CurrentRank}}
                 </td>
                 <td>
-                    <div class="avatar-tiny">
-                        <img ng-src="{{i.AvatarUrl}}" />
-                    </div>
-                    {{i.Username}}
+                    <a ng-click="showOptions(i)">
+                        <div class="avatar-tiny">
+                            <img ng-src="{{i.AvatarUrl}}" />
+                        </div>
+                        {{i.Username}}
+                    </a>
                 </td>
                 <td ng-if="i.EpisodeScores.length > 1" class="lbCell">
                     {{i.EpisodeScores[1].EpisodeScore | number}}
@@ -57,7 +148,11 @@
                 </td>
             </tr>
         </table>
-
+        <div ng-show="showing === 'friends'" style="width: 100%; text-align:center;">
+            <a class="btn btn-default btn-default-borded" ng-click="searchModal()">
+                <i class="fa fa-user-plus"></i> Add Friend
+            </a>
+        </div>
         <div class="text-center container-fluid" ng-show="lbContToken">
             <a ng-click="getLeaderboardPage(lbContToken)" class="btn btn-lg btn-default btn-default-borded">Load More</a>
         </div>

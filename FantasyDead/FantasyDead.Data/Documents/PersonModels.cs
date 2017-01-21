@@ -50,7 +50,8 @@
                 JoinedDate = this.JoinedDate,
                 PushNotificationData = this.PushNotificationData,
                 Role = this.Role,
-                Configuration = this.Configuration
+                Configuration = this.Configuration,
+                Friends = this.Friends
             };
 
 

@@ -322,14 +322,14 @@
 
             var current = this.FetchNextAvailableEpisode();
 
-            var episodes = (this.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes)
-                .Where(e=>e.Id != current.Id)
-                .ToList();
+            var episodes = (this.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes);
+            if (current != null)
+                episodes = episodes.Where(e => e.Id != current.Id).ToList();
 
             foreach (var p in result)
             {
                 var lbItem = new LeaderboardItem { PersonId = p.Id, AvatarUrl = p.AvatarPictureUrl, Username = p.Username, EpisodeScores = new List<LeaderboardEpisodeItem>() };
-                
+
                 lbItem.EpisodeScores = episodes.Select(ep => new LeaderboardEpisodeItem { EpisodeId = ep.Id, EpisodeName = ep.Name, EpisodeScore = 0, EpisodeDate = ep.AirDate }).ToList();
                 string mostRecentEpId = null;
                 if (lbItem.EpisodeScores.Count > 1)

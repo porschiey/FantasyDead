@@ -130,6 +130,9 @@
         [Route("api/configuration/definitions/{showId}")]
         public HttpResponseMessage FetchAllDefinitions(string showId)
         {
+            if (showId == "any")
+                showId = string.Empty;
+
             return this.ConvertDbResponse(this.db.FetchEventDefinitions(showId));
         }
 
@@ -143,6 +146,9 @@
         [Route("api/configuration/modifiers/{showId}")]
         public HttpResponseMessage FetchAllModifiers(string showId)
         {
+            if (showId == "any")
+                showId = string.Empty;
+
             return this.ConvertDbResponse(this.db.FetchEventModifiers(showId));
         }
 

@@ -145,46 +145,51 @@
             {
                 payload.CurrentEpisode = currentEp;
 
-                var picks = (this.db.GetEpisodePicks(personId).Content as List<EpisodePick>)
-                   .Where(p => p.EpisodeId == currentEp.Id);
-                payload.Slots = new List<RosterSlot>();
-                foreach (var p in picks)
+                if (payload.CurrentEpisode != null)
                 {
-                    var slot = new RosterSlot
+                    var picks = (this.db.GetEpisodePicks(personId).Content as List<EpisodePick>)
+                       .Where(p => p.EpisodeId == currentEp.Id);
+                    payload.Slots = new List<RosterSlot>();
+                    foreach (var p in picks)
                     {
-                        DeathSlot = (p.SlotType == (int)SlotType.Death),
-                        Pick = p
-                    };
+                        var slot = new RosterSlot
+                        {
+                            DeathSlot = (p.SlotType == (int)SlotType.Death),
+                            Pick = p
+                        };
 
-                    var character = payload.Characters.FirstOrDefault(c => c.Id == p.CharacterId);
-                    if (character == null)
-                    {
-                        //bad selection, character has already died (likely),
-                        //needs to be revoked
+                        var character = payload.Characters.FirstOrDefault(c => c.Id == p.CharacterId);
+                        if (character == null)
+                        {
+                            //bad selection, character has already died (likely),
+                            //needs to be revoked
 
-                        continue;
+                            continue;
+                        }
+                        character.Usage++;
+
+                        slot.CharacterName = character.Name;
+                        slot.CharacterPictureUrl = character.PrimaryImageUrl;
+                        slot.Occupied = true;
+                        slot.EpisodeId = p.EpisodeId;
+                        slot.Id = Guid.NewGuid().ToString();
+                        payload.Slots.Add(slot);
                     }
-                    character.Usage++;
-
-                    slot.CharacterName = character.Name;
-                    slot.CharacterPictureUrl = character.PrimaryImageUrl;
-                    slot.Occupied = true;
-                    slot.EpisodeId = p.EpisodeId;
-                    slot.Id = Guid.NewGuid().ToString();
-                    payload.Slots.Add(slot);
                 }
 
 
                 var classicSlots = Convert.ToInt32(ConfigurationManager.AppSettings["classicSlots"]);
                 var deathSlots = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
-
-                while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => !s.DeathSlot) < classicSlots)
+                if (payload.CurrentEpisode != null)
                 {
-                    payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
-                }
-                while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => s.DeathSlot) < deathSlots)
-                {
-                    payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
+                    while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => !s.DeathSlot) < classicSlots)
+                    {
+                        payload.Slots.Add(RosterSlot.Empty(payload.CurrentEpisode.Id));
+                    }
+                    while (payload.Slots.Where(s => s.EpisodeId == payload.CurrentEpisode.Id).Count(s => s.DeathSlot) < deathSlots)
+                    {
+                        payload.Slots.Add(RosterSlot.EmptyDeath(payload.CurrentEpisode.Id));
+                    }
                 }
             }
 

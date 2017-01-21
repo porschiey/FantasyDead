@@ -1,0 +1,81 @@
+﻿<div class="row" ng-show="!ready">
+    <br /><br />
+    <div class="container-fluid text-center">
+
+        <i class="fa fa-2x fa-spin fa-circle-o-notch"></i> <br />
+        Fetching definitions...
+    </div>
+</div>
+
+
+
+<div class="row" ng-show="ready">
+    <div class="container-fluid">
+        <br />
+        <h3 class="gray-header" style="color: #333; margin-left: 5px;">Event Definitions</h3>
+        <div class="list-group">
+            <div class="list-group-item" ng-repeat="e in definitions">
+
+                <div ng-click="e.details = !e.details" style="font-size: 12pt;">
+                    <i class="fa " ng-class="{'fa-plus': !e.details, 'fa-minus': e.details}"></i>
+                    {{e.Name}}
+                    <span class="badge-clear" style="font-size: 12pt;">
+                        {{e.PointValue}} points
+                    </span>
+                </div>
+                <div ng-show="e.details">
+                    <p>
+                        <b>Description</b><br />
+                        {{e.Description}}
+                    </p>
+                    <p>
+                        <b>Special Rules</b><br />
+                        {{e.SpecialRules === '' ? 'None.' : e.SpecialRules}}
+                    </p>
+                    <p>
+                        <a class="btn btn-default btn-default-borded" ng-click="e.details = false">
+                            Hide Details
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row" ng-show="ready">
+    <div class="container-fluid">
+
+        <h3 class="gray-header" style="color: #333; margin-left: 5px;">Modifiers</h3>
+        <div class="list-group">
+            <div class="list-group-item" ng-repeat="m in modifiers">
+                <div ng-click="m.details = !m.details" style="font-size: 12pt;">
+                    <i class="fa " ng-class="{'fa-plus': !m.details, 'fa-minus': m.details}"></i>
+                    {{m.Name}}
+                    <span class="badge-clear" style="font-size: 12pt;">
+                        {{modValueConvert(m.ModificationTypeInt, m.ModificationValue)}}
+                    </span>
+                </div>
+                <div ng-show="m.details">
+                    <p>
+                        <b>Description</b><br />
+                        {{m.Description}}
+                    </p>
+                    <p>
+                        <b>Special Rules</b><br />
+                        {{m.SpecialRules === '' ? 'None.' : m.SpecialRules}}
+                    </p>
+                    <p>
+                        <a class="btn btn-default btn-default-borded" ng-click="m.details = false">
+                            Hide Details
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+

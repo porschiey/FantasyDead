@@ -4,7 +4,7 @@
 
     var loginOptions = { redirect_uri: 'https://thefantasydead.com/callback' };
 
-    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings', 'wdf.leaderboard', 'wdf.stats', 'wdf.friends']);
+    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings', 'wdf.leaderboard', 'wdf.stats', 'wdf.events']);
 
     app.directive('fileModel', ['$parse', function ($parse) {
         return {
@@ -25,8 +25,8 @@
     app.run(['$rootScope', '$cordovaOauth', '$location', '$http', function ($rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
-            //$rootScope.fdApi = 'http://192.168.1.2/';
-            $rootScope.fdApi = 'https://thefantasydead.com/';
+            $rootScope.fdApi = 'http://192.168.1.2/';
+            //$rootScope.fdApi = 'https://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -43,11 +43,11 @@
                         $rootScope.user.isNewUser = $rootScope.user.Role === 1;
                         if ($rootScope.user.isNewUser)
                             $location.path('/settings');
-                        else
-                            $location.path('/roster');
-                        console.log('user is already logged in');
-                        console.log('user...: ' + JSON.stringify($rootScope.user));
-                        $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
+                        else {
+                            console.log('user is already logged in');
+                            $rootScope.authorize($rootScope.user.Token);
+                        }
+
 
                         $rootScope.deadlineLockHours = null;
                         if ($rootScope.user.Configuration.DeadlineReminderHours > 0)
@@ -124,6 +124,53 @@
                 });
             };
 
+
+            //uses login data to authorize with fantasy dead api
+            $rootScope.authorize = function (token, noRD) {
+                if (noRD === undefined)
+                    noRD = false;
+
+                if (token === undefined && $rootScope.user.loggedIn)
+                    token = $rootScope.user.Token;
+
+                $http.defaults.headers.common.Authorization = 'Bearer ' + token;
+                console.log('fetching profile...');
+                $http.get($rootScope.fdApi + 'api/person').then(function (response) {
+
+
+                    var u = response.data;
+                    $rootScope.user = u;
+                    $rootScope.user.Token = token;
+                    $rootScope.user.loggedIn = true;
+                    $rootScope.user.isNewUser = u.Role === 1;
+                    console.log('user...: ' + JSON.stringify($rootScope.user));
+
+                    $rootScope.deadlineLockHours = null;
+                    if ($rootScope.user.Configuration.DeadlineLockHours > 0)
+                        $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineLockHours, d: $rootScope.user.Configuration.DeadlineLockHours + ' hour(s) before' };
+                    $rootScope.saveUserChanges();
+
+                    if ($rootScope.user.isNewUser) {
+                        $location.path('/settings');
+                        $rootScope.user.askNotify = true;
+                    }
+                    else {
+                        if (!noRD)
+                            $location.path('/roster');
+                    }
+
+                    if (!$rootScope.$$phase)
+                        $rootScope.$digest();
+
+                }).catch(function (error) {
+                    $rootScope.loggingIn = false;
+                    $rootScope.handleError(error);
+                    $rootScope.showError('There was an error while logging you in. Please try again later.');
+                });
+
+
+            };
+
             init();
         });
     }]);
@@ -136,7 +183,7 @@
                 templateUrl: 'scripts/app/home.html',
                 controller: 'homeController'
             })
-        .when('/roster',
+        .when('/roster/:personId?',
         {
             templateUrl: 'scripts/app/roster.html',
             controller: 'rosterController'
@@ -151,10 +198,10 @@
             templateUrl: 'scripts/app/settings.html',
             controller: 'settingsController'
         })
-            .when('/friends',
+            .when('/events',
         {
-            templateUrl: 'scripts/app/friends.html',
-            controller: 'friendsController'
+            templateUrl: 'scripts/app/events.html',
+            controller: 'eventsController'
         })
             .when('/stats',
         {
@@ -171,11 +218,21 @@
     app.controller('masterController', ['$scope', '$rootScope', '$cordovaOauth', '$location', '$http', function ($scope, $rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
+
+
             $rootScope.handleError = function (error) {
                 if (typeof error === 'string')
                     console.error(error);
                 else
                     console.error(JSON.stringify(error));
+
+                if (error.status) {
+                    if (error.status === 401) {
+                        //token expired, log out
+                        $rootScope.logout();
+                        return;
+                    }
+                }
             };
 
             $rootScope.showError = function (error) {
@@ -203,7 +260,35 @@
                 $('#errorModal').modal();
             };
 
-     
+
+            $rootScope.generatePointValue = function (raw) {
+
+                var str = '' + parseFloat(raw);
+                var parts = str.split('.');
+                var whole = parts[0];
+
+                var dec = parts.length === 1 ? '00' : '' + round(parseInt(parts[1]), 2);
+                return { whole: whole, dec: dec };
+            };
+
+            $rootScope.isAFriend = function (id) {
+                try {
+
+                    var isFriend = false;
+                    $.each($rootScope.user.Friends, function (ix, f) {
+
+                        if (f === id) {
+                            isFriend = true;
+                            return false;
+                        }
+                    });
+
+                    return isFriend;
+                } catch (e) {
+                    return false;
+                }
+            };
+
 
             //toggles.. the menu!
             $rootScope.menuOpen = false;
@@ -241,41 +326,6 @@
 
 
 
-            //uses login data to authorize with fantasy dead api
-            var authorize = function (token) {
-
-                $http.defaults.headers.common.Authorization = 'Bearer ' + token;
-                $http.get($rootScope.fdApi + 'api/person').then(function (response) {
-
-                    var u = response.data;
-                    $rootScope.user = u;
-                    $rootScope.user.Token = token;
-                    $rootScope.user.loggedIn = true;
-                    $rootScope.user.isNewUser = u.Role === 1;
-
-                    $rootScope.deadlineLockHours = null;
-                    if ($rootScope.user.Configuration.DeadlineLockHours > 0)
-                        $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineLockHours, d: $rootScope.user.Configuration.DeadlineLockHours + ' hour(s) before' };
-                    $rootScope.saveUserChanges();
-
-                    if ($rootScope.user.isNewUser) {
-                        $location.path('/settings');
-                        $rootScope.user.askNotify = true;
-                    }
-                    else
-                        $location.path('/roster');
-
-                    if (!$rootScope.$$phase)
-                        $rootScope.$digest();
-
-                }).catch(function (error) {
-                    $rootScope.loggingIn = false;
-                    $rootScope.handleError(error);
-                    $rootScope.showError('There was an error while logging you in. Please try again later.');
-                });
-
-
-            };
 
             //// LOGINS
 
@@ -288,7 +338,7 @@
 
                     var lr = { token: result.access_token, platform: 1 };
                     $http.put($rootScope.fdApi + 'api/register/social', lr).then(function (response) {
-                        authorize(response.data);
+                        $rootScope.authorize(response.data);
                     }).catch(function (error) {
                         $rootScope.handleError(error);
                         $rootScope.showError('Could not log you into Facebook: Login servers had an issue. Please try again later.');
@@ -306,7 +356,7 @@
 
                         var lr = { token: result.access_token, platform: 2 };
                         $http.put($rootScope.fdApi + 'api/register/social', lr).then(function (response) {
-                            authorize(response.data);
+                            $rootScope.authorize(response.data);
                         }).catch(function (error) {
                             $rootScope.handleError(error);
                             $rootScope.showError('Could not log you into Google: Login servers had an issue. Please try again later.');
@@ -332,7 +382,7 @@
 
                         var lr = { token: data.oauth_token + ',' + data.oauth_token_secret, platform: 0 };
                         $http.put($rootScope.fdApi + 'api/register/social', lr).then(function (response) {
-                            authorize(response.data);
+                            $rootScope.authorize(response.data);
                         }).catch(function (error) {
                             $rootScope.handleError(error);
                             $rootScope.loggingIn = false;
@@ -357,7 +407,7 @@
 
                     var lr = { token: result.access_token, platform: 3 };
                     $http.put($rootScope.fdApi + 'api/register/social', lr).then(function (response) {
-                        authorize(response.data);
+                        $rootScope.authorize(response.data);
                     }).catch(function (error) {
                         $rootScope.handleError(error);
                         $rootScope.showError('Could not log you into Microsoft: Login servers had an issue. Please try again later.');
@@ -411,6 +461,12 @@
                     $rootScope.destroyPushSetup();
                 }
 
+            };
+
+
+            //navigate to the roster page and look up a profile
+            $rootScope.view = function (personId) {
+                $location.path('/roster/' + personId);
             };
 
             //fires configuration change to api

@@ -2,7 +2,7 @@
 
     var app = angular.module('wdf.roster', ['ngRoute']);
 
-    app.controller('rosterController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
+    app.controller('rosterController', ['$scope', '$rootScope', '$http', '$routeParams', function ($scope, $rootScope, $http, $routeParams) {
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
@@ -15,64 +15,73 @@
             $scope.ready = false;
             $scope.init = function () {
                 $scope.ready = false;
-                $scope.loadingText = $scope.rosterLoadText();
-                $http.get($rootScope.fdApi + 'api/roster/bulk/' + $rootScope.user.PersonId).then(function (response) {
 
-                    $scope.noun = response.data.Person.PersonId === $rootScope.user.PersonId ? 'You' : response.data.Person.Username;
+                var pid = $routeParams.personId;
+                if (!pid)
+                    pid = $rootScope.user.PersonId;
+                $scope.loadingText = $scope.rosterLoadText();
+                $http.get($rootScope.fdApi + 'api/roster/bulk/' + pid).then(function (response) {
+
+                    $scope.isUser = response.data.Person.PersonId === $rootScope.user.PersonId;
+                    $scope.noun = $scope.isUser ? 'You' : response.data.Person.Username;
                     $scope.characters = response.data.Characters;
                     $scope.show = response.data.RelatedShow;
 
                     $scope.viewingUser = response.data.Person;
 
-                    $scope.score = $scope.generatePointValue($scope.viewingUser.TotalScore);
+                    $scope.score = $rootScope.generatePointValue($scope.viewingUser.TotalScore);
 
-                    if ($rootScope.user.PersonId === response.data.Person.PersonId) {
+                    if ($scope.isUser) {
                         $rootScope.user.TotalScore = response.data.Person.TotalScore;
+
+                        var allSlots = response.data.Slots;
+                        $scope.slots = [];
+                        $scope.history = [];
+                        $scope.episode = response.data.CurrentEpisode;
+                        $rootScope.episodes = response.data.AllEpisodes;
+
+                        if (allSlots != null) {
+                            $.each(allSlots, function (ix, i) {
+
+                                if (i.EpisodeId === response.data.CurrentEpisode.id)
+                                    $scope.slots.push(i);
+                            });
+                        }
                     }
-
-                    var allSlots = response.data.Slots;
-                    $scope.slots = [];
-                    $scope.history = [];
-                    $scope.episode = response.data.CurrentEpisode;
-                    $rootScope.episodes = response.data.AllEpisodes;
-
-                    
-                    $.each(allSlots, function (ix, i) {
-
-                        if (i.EpisodeId === response.data.CurrentEpisode.id)
-                            $scope.slots.push(i);
-                    });
 
                     $scope.history = [];
                     $.each(response.data.History, function (ix, h) {
-                        h.score = $scope.generatePointValue(h.TotalScore);
+                        h.score = $rootScope.generatePointValue(h.TotalScore);
                         $scope.history.push(h);
                     });
 
                     $scope.gain = $scope.history[0].TotalScore;
                     $scope.verb = $scope.gain > 0 ? 'gained' : 'lost';
 
+                    $scope.showing = $scope.isUser ? 'current' : 'history';
+
                     $scope.ready = true;
 
-                    setTimeout(function () {
+                    if ($scope.isUser) {
+                        setTimeout(function () {
 
-                        var animInClass = "flipInY";
-                        var animOutClass = "bounceOut";
+                            var animInClass = "flipInY";
+                            var animOutClass = "bounceOut";
 
-                        $('body').on('click', '.front', function () {
-                            $(this).addClass('flipOutY');
-                            $('#charModal').addClass(animInClass);
-                        });
+                            $('body').on('click', '.front', function () {
+                                $(this).addClass('flipOutY');
+                                $('#charModal').addClass(animInClass);
+                            });
 
-                        $('#charModal').on('hide.bs.modal', function () {
+                            $('#charModal').on('hide.bs.modal', function () {
 
-                        });
+                            });
 
-                        $('#charModal').on('hidden.bs.modal', function (evt) {
-                            $('#charModal').removeClass(animOutClass)
-                        });
-                    }, 0);
-
+                            $('#charModal').on('hidden.bs.modal', function (evt) {
+                                $('#charModal').removeClass(animOutClass)
+                            });
+                        }, 0);
+                    }
                 }).catch(function (error) {
                     $rootScope.handleError(error);
                     $scope.ready = false;
@@ -85,15 +94,6 @@
                 $scope.showing = ($scope.showing === 'current') ? 'history' : 'current';
             };
 
-            $scope.generatePointValue = function (raw) {
-
-                var str = '' + parseFloat(raw);
-                var parts = str.split('.');
-                var whole = parts[0];
-
-                var dec = parts.length === 1 ? '00' : '' + round(parseInt(parts[1]), 2);
-                return { whole: whole, dec: dec };
-            };
 
 
             $scope.parseTimestamp = function (totalSeconds) {
