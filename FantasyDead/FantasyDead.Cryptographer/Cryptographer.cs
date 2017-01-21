@@ -55,7 +55,7 @@
         /// <param name="role"></param>
         /// <param name="expireInDays"></param>
         /// <returns></returns>
-        public string CreateToken(string id, string username, int role, int expireInDays = 7)
+        public string CreateToken(string id, string username, int role, int expireInDays = 180)
         {
             var expiration = DateTime.UtcNow.AddDays(expireInDays);
             var scaffolding = $"{id}|{Guid.NewGuid()}|{username}|{role}|{expiration}";

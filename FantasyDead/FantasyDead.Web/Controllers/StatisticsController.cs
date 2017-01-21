@@ -98,11 +98,18 @@ namespace FantasyDead.Web.Controllers
 
             var redisKey = tok == null ? "first" : tok;
 
-            if (this.cache.KeyExists(redisKey))
+            try
             {
-                var cachedLbJson = this.cache.StringGet(redisKey);
-                var cachedLb = JsonConvert.DeserializeObject<LeaderboardResult>(cachedLbJson);
-                return this.Request.CreateResponse(cachedLb);
+                if (this.cache.KeyExists(redisKey))
+                {
+                    var cachedLbJson = this.cache.StringGet(redisKey);
+                    var cachedLb = JsonConvert.DeserializeObject<LeaderboardResult>(cachedLbJson);
+                    return this.Request.CreateResponse(cachedLb);
+                }
+            }
+            catch (Exception)
+            {
+                //swallow for now, in favor of continuing
             }
 
             var lb = await this.db.Leaderboard(tok);
@@ -113,16 +120,23 @@ namespace FantasyDead.Web.Controllers
             //lb keys also into cache
             await Task.Run(() =>
             {
-                const string lbKeys = "lbKeys";
-                var keysJson = this.cache.StringGet(lbKeys);
+                try
+                {
+                    const string lbKeys = "lbKeys";
+                    var keysJson = this.cache.StringGet(lbKeys);
 
-                var allKeys = ((string)keysJson == null) ? new List<string>() : JsonConvert.DeserializeObject<List<string>>(keysJson);
+                    var allKeys = ((string)keysJson == null) ? new List<string>() : JsonConvert.DeserializeObject<List<string>>(keysJson);
 
-                if (!allKeys.Contains(redisKey))
-                    allKeys.Add(redisKey);
+                    if (!allKeys.Contains(redisKey))
+                        allKeys.Add(redisKey);
 
-                keysJson = JsonConvert.SerializeObject(allKeys);
-                this.cache.StringSet(lbKeys, keysJson);
+                    keysJson = JsonConvert.SerializeObject(allKeys);
+                    this.cache.StringSet(lbKeys, keysJson);
+                }
+                catch (Exception)
+                {
+                    //swallow for now, if cache isn't running.
+                }
             });
 
             return this.Request.CreateResponse(HttpStatusCode.OK, lb);

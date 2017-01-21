@@ -55,9 +55,10 @@
                         $scope.history.push(h);
                     });
 
-                    $scope.gain = $scope.history[0].TotalScore;
-                    $scope.verb = $scope.gain > 0 ? 'gained' : 'lost';
-
+                    if ($scope.history.length > 0) {
+                        $scope.gain = $scope.history[0].TotalScore;
+                        $scope.verb = $scope.gain > 0 ? 'gained' : 'lost';
+                    }
                     $scope.showing = $scope.isUser ? 'current' : 'history';
 
                     $scope.ready = true;

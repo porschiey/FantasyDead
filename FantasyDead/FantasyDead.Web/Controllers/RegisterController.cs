@@ -1,5 +1,6 @@
 ﻿namespace FantasyDead.Web.Controllers
 {
+    using App_Start;
     using Crypto;
     using Data;
     using Data.Documents;
@@ -13,6 +14,7 @@
     using System.Net;
     using System.Net.Http;
     using System.Runtime.Caching;
+    using System.Security.Claims;
     using System.Threading.Tasks;
     using System.Web.Http;
 
@@ -164,7 +166,7 @@
                         var keys = req.Token.Split(',');
                         Tweetinvi.Auth.SetUserCredentials("EBJIutCaB6XiNvbGe6oexBYKf", "16XiJIz8j9KKFFNYeAkt5EZEMQqE5Rtc3tPBbFadnxR8VaGWzR", keys[0], keys[1]);
                         var twitterUser = Tweetinvi.User.GetAuthenticatedUser();
-                        
+
                         user.AvatarPictureUrl = twitterUser.ProfileImageUrlHttps;
                         user.Username = twitterUser.ScreenName;
                         user.Email = twitterUser.Email;
@@ -265,9 +267,15 @@
         /// <returns></returns>
         [HttpGet]
         [Route("api/register/check/{username}")]
+        [ApiAuthorization]
         public HttpResponseMessage Check(string username)
         {
             var personId = this.db.GetPersonIdByUsername(username);
+            var requestor = new SlimPerson(ClaimsPrincipal.Current.Claims.ToList());
+
+            if (requestor.PersonId == personId)
+                personId = null;
+
             var result = personId == null; //true if AVAILABLE
 
             return this.Request.CreateResponse(HttpStatusCode.OK, result);

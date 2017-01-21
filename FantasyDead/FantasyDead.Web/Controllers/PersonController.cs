@@ -80,7 +80,7 @@
                 person.Role = (int)PersonRole.Member;
 
                 var alreadyExist = this.db.GetPersonIdByUsername(req.Username);
-                if (alreadyExist != null)
+                if (alreadyExist != null && alreadyExist != person.PersonId)
                     return this.Request.CreateErrorResponse(HttpStatusCode.Conflict, "That username is already taken.");
 
                 person.Username = req.Username;

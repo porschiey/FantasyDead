@@ -27,31 +27,79 @@
                 <h4 class="modal-title">Log in to The Fantasy Dead</h4>
             </div>
             <div class="modal-body text-center">
-                <p>
-                    <a class="btn btn-lg btn-primary btn-sized" ng-click="twitterLogin()">
-                        <i class="fa fa-twitter"></i>
-                        <span>Twitter</span>
+                <div ng-show="!custom">
+                    <p>
+                        <a class="btn btn-lg btn-primary btn-sized" ng-click="twitterLogin()">
+                            <i class="fa fa-twitter"></i>
+                            <span>Twitter</span>
+                        </a>
+                        <a class="btn btn-lg btn-primary btn-sized" ng-click="facebookLogin()">
+                            <i class="fa fa-facebook"></i>
+                            <span>Facebook</span>
+                        </a>
+                        <a class="btn btn-lg btn-primary btn-sized" ng-click="googleLogin()">
+                            <i class="fa fa-google"></i>
+                            <span>Google</span>
+                        </a>
+                        <a class="btn btn-lg btn-primary btn-sized" ng-click="microsoftLogin()">
+                            <i class="fa fa-windows"></i>
+                            <span>Microsoft</span>
+                        </a>
+                        <a class="btn btn-lg btn-primary btn-sized" ng-click="custom = true">
+                            <i class="fa fa-pencil"></i>
+                            <span>Email Address</span>
+                        </a>
+                    </p>
+                </div>
+                <div ng-show="custom && !loginForm" class="text-center animated flipInY">
+                    <h3 class="gray-header" style="color: #333">
+                        Manual Register
+                    </h3>
+
+                    <input type="email" ng-model="reg.email" ng-blur="validateReg()" class="form-control" placeholder="someone@something.com" />
+                    <input type="password" ng-model="reg.p1" ng-blur="validateReg()" class="form-control" placeholder="password" />
+                    <input type="password" ng-model="reg.p2" ng-blur="validateReg()" class="form-control" placeholder="verify password" />
+
+                    <div class="alert alert-danger" ng-show="!regValid">
+                        {{regError}}
+                    </div>
+                    <br />
+                    <a class="btn btn-primary" ng-click="submitReg()" ng-show="regValid && !submitting">Register</a> 
+                    <span ng-show="submitting"><i class="fa fa-spin fa-circle-o-notch"></i></span><br />
+                    <a class="btn btn-default btn-default-borded" style="margin: 10px;" ng-click="loginForm = true">
+                        I already have an account
                     </a>
-                    <a class="btn btn-lg btn-primary btn-sized" ng-click="facebookLogin()">
-                        <i class="fa fa-facebook"></i>
-                        <span>Facebook</span>
+                    <br />
+                    <a class="btn btn-default btn-default-borded" style="margin: 10px;" ng-click="custom = false">
+                        <i class="fa fa-twitter"></i> &ensp;<i class="fa fa-facebook"></i> &ensp;<i class="fa fa-google"></i> &ensp;<i class="fa fa-windows"></i>
                     </a>
-                    <a class="btn btn-lg btn-primary btn-sized" ng-click="googleLogin()">
-                        <i class="fa fa-google"></i>
-                        <span>Google</span>
+                  
+                </div>
+                <div ng-show="custom && loginForm" class="text-center animated flipInY">
+                    <h3 class="gray-header" style="color: #333">
+                        Sign in
+                    </h3>
+
+                    <input type="email" ng-model="log.email" class="form-control" placeholder="someone@something.com" />
+                    <input type="password" ng-model="log.p1" class="form-control" placeholder="password" />
+
+                    <div class="alert alert-danger" ng-show="!logValid">
+                        {{logError}}
+                    </div>
+
+                    <a class="btn btn-primary" ng-click="submitLog()" ng-show="!submitting">Sign in</a>
+                    <span ng-show="submitting"><i class="fa fa-spin fa-circle-o-notch"></i></span><br />
+                    <a class="btn btn-default btn-default-borded" style="margin: 10px;" ng-click="loginForm = false">
+                        I need to create an account
                     </a>
-                    <a class="btn btn-lg btn-primary btn-sized" ng-click="microsoftLogin()">
-                        <i class="fa fa-windows"></i>
-                        <span>Microsoft</span>
+                    <br />
+                    <a class="btn btn-default btn-default-borded" style="margin: 10px;" ng-click="custom = false">
+                        <i class="fa fa-twitter"></i> &ensp;<i class="fa fa-facebook"></i> &ensp;<i class="fa fa-google"></i> &ensp;<i class="fa fa-windows"></i>
                     </a>
-                    <a class="btn btn-lg btn-primary btn-sized" ng-click="register()">
-                        <i class="fa fa-pencil"></i>
-                        <span>Email Address</span>
-                    </a>
-                </p>
+                </div>
             </div>
             <div class="modal-footer" style="text-align: left;">
-                If you've logged in before, we'll use your pre-existing account. If not, we'll create one!
+                <span ng-show="!custom">If you've logged in before, we'll use your pre-existing account. If not, we'll create one!</span>
                 <br />
                 <a href="http://thefantasydead.com/home/privacy"><i class="fa fa-lock"></i> Privacy</a><br />
                 <a href="http://thefantasydead.com/home/legal"><i class="fa fa-gavel"></i> Legal Disclaimer</a>
