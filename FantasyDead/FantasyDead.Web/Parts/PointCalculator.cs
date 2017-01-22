@@ -225,6 +225,8 @@
                     this.cache.KeyDelete(key);
                 }
 
+                this.cache.KeyDelete("all-events");
+
             });
         }
 

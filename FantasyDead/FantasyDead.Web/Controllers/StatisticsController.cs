@@ -2,6 +2,7 @@
 namespace FantasyDead.Web.Controllers
 {
     using Data;
+    using Data.Configuration;
     using Data.Documents;
     using Data.Models;
     using Models;
@@ -35,6 +36,68 @@ namespace FantasyDead.Web.Controllers
             this.cache = RedisCache.Connection.GetDatabase();
         }
 
+
+        /// <summary>
+        /// GET api/statistics/events/all
+        /// Fetches all the events. Cached.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/statistics/events/all")]
+        public HttpResponseMessage ListEvents()
+        {
+            var redisKey = "all-events";
+            try
+            {
+                //if (this.cache.KeyExists(redisKey))
+                //{
+                //    var json = this.cache.StringGet(redisKey);
+                //    var cachedEvents = JsonConvert.DeserializeObject<List<StatEvent>>(json);
+                //    return this.Request.CreateResponse(HttpStatusCode.OK, cachedEvents);
+                //}
+            }
+            catch (Exception)
+            {
+                //swallow if cache is down
+            }
+
+            var showData = (this.db.FetchShowData().Content as List<Show>)[0];
+            var defs = this.db.FetchEventDefinitions().Content as List<EventDefinition>;
+            //var mods = this.db.FetchEventModifiers().Content as List<EventModifier>;
+            var characters = this.db.FetchCharacters(showData.Id).Content as List<Character>;
+            var episodes = showData.Seasons.SelectMany(s => s.Episodes);
+            var events = this.db.FetchAllEvents();
+
+            var statEvents = new List<StatEvent>();
+            foreach (var ev in events)
+            {
+                var character = characters.FirstOrDefault(c => c.Id == ev.CharacterId);
+                var episode = episodes.FirstOrDefault(e => e.Id == ev.EpisodeId);
+                var def = defs.FirstOrDefault(d => d.Id == ev.ActionId);
+
+                if (character == null || episode == null || def == null)
+                    continue;
+
+                var nEv = new StatEvent(ev)
+                {
+                    CharacterName = character.Name,
+                    EpisodeName = episode.Name,
+                    ActionType = def.Category.ToString(),
+                };
+
+                statEvents.Add(nEv);
+            }
+            try
+            {
+                this.cache.StringSet(redisKey, JsonConvert.SerializeObject(statEvents), TimeSpan.FromMinutes(30));
+            }
+            catch (Exception)
+            {
+                //swallow if cache is down
+            }
+
+            return this.Request.CreateResponse(HttpStatusCode.OK, statEvents);
+        }
 
         /// <summary>
         /// GET api/event/list/{characterId}

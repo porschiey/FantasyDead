@@ -338,7 +338,9 @@
                 foreach (var ev in p.Events)
                 {
                     //treat episode list as KvP
-                    var epAe = lbItem.EpisodeScores.First(e => e.EpisodeId == ev.EpisodeId);
+                    var epAe = lbItem.EpisodeScores.FirstOrDefault(e => e.EpisodeId == ev.EpisodeId);
+                    if (epAe == null)
+                        continue;
                     epAe.EpisodeScore += ev.Points;
 
                     if (!string.IsNullOrWhiteSpace(mostRecentEpId) && mostRecentEpId != ev.EpisodeId)
@@ -840,6 +842,19 @@
         public List<CharacterEvent> FetchEventsForCharacter(string characterId)
         {
             return this.FetchEventsByPkey(characterId);
+        }
+
+        /// <summary>
+        /// Fetches all events.
+        /// </summary>
+        /// <param name="characterId"></param>
+        /// <returns></returns>
+        public List<CharacterEvent> FetchAllEvents()
+        {
+            var q = new TableQuery<CharacterEvent>();
+            var results = this.events.ExecuteQuery(q).ToList();
+            var filtered = (from r in results where !string.IsNullOrWhiteSpace(r.EpisodeId) select r).ToList();
+            return filtered;
         }
 
         /// <summary>

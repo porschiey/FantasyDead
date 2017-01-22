@@ -1,1 +1,49 @@
-﻿
+﻿<div class="modal animated flipInY" tabindex="-1" role="dialog" id="epModal">
+    <div class="modal-dialog modal-sm" role="document" style="height: 90%;">
+        <div class="modal-content text-center" style="height: 100%;">
+
+            <h3 class="gray-header" style="color: #333;">
+                Select Episode(s)
+            </h3>
+
+            <div class="list-group">
+                <a class="list-group-item" style="margin: 0 5px;"
+                   ng-repeat="ep in episodes" ng-click="ep.lit = !ep.lit"
+                   ng-class="{'lit': ep.lit}">
+                    <i class="fa fa-check" ng-show="ep.lit"></i>&ensp;
+                    {{ep.name}}
+                </a>
+            </div>
+
+            <a class="btn btn-default btn-default-borded btn-lg" ng-click="applyChanges()">
+                Apply Changes
+            </a>
+        </div>
+    </div>
+</div>
+<div class="container-fluid text-center" ng-show="!ready">
+    <br />
+    <i class="fa fa-spin fa-2x fa-circle-o-notch"></i><br />
+    Getting stats...
+</div>
+<div class="container-fluid" ng-show="ready">
+    <br />
+    <h3 class="gray-header" style="color: #333;">
+        Season Breakdown
+    </h3>
+    <canvas id="doughnut" class="chart chart-doughnut"
+            chart-data="seasonEv.data" chart-labels="seasonEv.labels"></canvas>
+
+    <br />
+    <h3 class="gray-header" style="color: #333;">
+        Character Leaderboard
+    </h3>
+    <canvas id="char-chart" class="chart-horizontal-bar"
+            chart-data="charLb.data" chart-labels="charLb.labels" chart-options="charLb.options"></canvas>
+    <br />
+
+    <a ng-click="changeEpModal()" class="btn btn-default btn-default-borded btn-lg">
+        Change Episode(s)
+    </a>
+
+</div>

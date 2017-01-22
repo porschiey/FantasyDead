@@ -4,7 +4,7 @@
 
     var loginOptions = { redirect_uri: 'https://thefantasydead.com/callback' };
 
-    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings', 'wdf.leaderboard', 'wdf.stats', 'wdf.events']);
+    var app = angular.module('wdf', ['ngCordova', 'ngCordovaOauth', 'wdf.home', 'wdf.roster', 'wdf.settings', 'wdf.leaderboard', 'wdf.stats', 'wdf.events', 'chart.js']);
 
     app.directive('fileModel', ['$parse', function ($parse) {
         return {
@@ -25,8 +25,8 @@
     app.run(['$rootScope', '$cordovaOauth', '$location', '$http', function ($rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
-            //$rootScope.fdApi = 'http://192.168.1.2/';
-            $rootScope.fdApi = 'http://thefantasydead.com/';
+            $rootScope.fdApi = 'http://192.168.1.2/';
+            //$rootScope.fdApi = 'http://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -175,7 +175,9 @@
         });
     }]);
 
-    app.config(['$routeProvider', '$locationProvider', '$httpProvider', function ($routeProvider, $locationProvider, $httpProvider) {
+    app.config(['$routeProvider', '$locationProvider', '$httpProvider', 'ChartJsProvider', function ($routeProvider, $locationProvider, $httpProvider, ChartJsProvider) {
+
+     
 
         $routeProvider
             .when('/home',
@@ -260,6 +262,9 @@
                 $('#errorModal').modal();
             };
 
+            var round = function (value, decimals) {
+                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+            };
 
             $rootScope.generatePointValue = function (raw) {
 

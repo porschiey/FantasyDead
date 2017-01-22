@@ -6,9 +6,7 @@
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
-            var round = function (value, decimals) {
-                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
-            };
+         
 
             $scope.showing = 'current';
 
@@ -167,6 +165,8 @@
             };
 
             $scope.charIsSlotted = function (id) {
+                if ($scope.slots === undefined)
+                    return false;
 
                 var results = $.grep($scope.slots, function (e, ix) {
                     if (!e.Pick)
@@ -259,7 +259,7 @@
 
             $scope.rosterLoadText = function () {
 
-                var loadText = ['I wonder who you picked...', 'Loading roster...', 'Rostering your loader...', 'Thinking of a witty loading text...', 'Discovering character options...', 'Pondering possibility of a cure...', 'Fetching the humans you bet on...'];
+                var loadText = ['I wonder who died...', 'Loading roster...', 'Rostering the loader...', 'Thinking of a witty loading text...', 'Discovering character options...', 'Pondering possibility of a cure...', 'Fetching the humans we bet on...', 'Hiding behind Rick...', 'Feeding Lucille...'];
 
                 var option = Math.floor(Math.random() * loadText.length);
                 return loadText[option];

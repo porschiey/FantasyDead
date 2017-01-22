@@ -468,3 +468,8 @@ a.center-fixed{
     width: 70%;
     margin: 10px;
 }
+
+a.lit {
+    background-color: #7d5200;
+    color: #f2f2f2;
+}
