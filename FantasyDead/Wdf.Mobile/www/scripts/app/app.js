@@ -26,7 +26,7 @@
         document.addEventListener("deviceready", function () {
 
             $rootScope.fdApi = 'http://192.168.1.2/';
-            //$rootScope.fdApi = 'http://thefantasydead.com/';
+            $rootScope.fdApi = 'http://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
