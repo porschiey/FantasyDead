@@ -307,6 +307,8 @@
     <Content Include="Content\font-awesome.css" />
     <Content Include="Content\font-awesome.min.css" />
     <Content Include="Content\Images\bgPlain.png" />
+    <Content Include="Content\Images\icon-36-ldpi.png" />
+    <Content Include="Content\Images\icon-48-mdpi.png" />
     <Content Include="Content\Images\newSiteLanding.png" />
     <Content Include="Content\Images\newSiteLandingM.png" />
     <Content Include="Content\Images\newSiteLandingMbottom.png" />

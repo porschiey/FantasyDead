@@ -217,7 +217,7 @@ div.dl-buttons-lg {
 
 
 @media(max-width: 768px) {
-    div.navbar-collapse {
+    div.navbar-collapse, .navbar-header {
         background-color: #fff;
     }
 }
