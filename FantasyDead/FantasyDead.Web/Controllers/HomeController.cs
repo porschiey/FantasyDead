@@ -22,5 +22,10 @@ namespace FantasyDead.Web.Controllers
         {
             return View();
         }
+
+        public ActionResult Support()
+        {
+            return View();
+        }
     }
 }

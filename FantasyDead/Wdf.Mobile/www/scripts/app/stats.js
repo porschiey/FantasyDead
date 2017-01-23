@@ -11,7 +11,7 @@
                 $.each(col, function (ix, i) {
                     if (i.id === id) {
                         fIx = ix;
-                        return true;
+                        return false;
                     }
                 });
 
@@ -26,7 +26,7 @@
                 $.each($scope.episodes, function (ix, e) {
                     if (e.id === epId) {
                         lit = e.lit;
-                        return true;
+                        return false;
                     }
                 });
 
@@ -38,7 +38,7 @@
                 $.each(col, function (ix, i) {
                     if (i === id) {
                         fIx = ix;
-                        return true;
+                        return false;
                     }
                 });
 
@@ -98,7 +98,7 @@
                         }
                     } else if (filtered && !isLit(ev.EpisodeId)) {
                         console.log(JSON.stringify(ev));
-                        return false;
+                        return true;
                     }
 
                     //actions
@@ -118,6 +118,11 @@
                     tempChars[ev.CharacterName] += ev.Points;
 
                 });
+
+                if ($scope.seasonEv.labels.length === 0) {
+                    $scope.init();
+                    return;
+                }
 
                 //aggregate season events
                 $.each($scope.seasonEv.labels, function (ix, l) {

@@ -177,8 +177,18 @@
                     }
                 case "DeadlineReminderHours":
                     {
-                        person.Configuration.DeadlineReminderHours = Convert.ToInt32(value);
-                        await PushService.Instance.AddTag(person.PersonId, PushService.DeadlineTag(person.Configuration.DeadlineReminderHours));
+                        var v = Convert.ToInt32(value);
+                        person.Configuration.DeadlineReminderHours = v;
+                        if (v == 0)
+                        {
+                            //REMOVE
+                            await PushService.Instance.RemoveTag(person.PersonId, PushService.DeadlineTag(person.Configuration.DeadlineReminderHours));
+                        }
+                        else
+                        {
+                            //ADD
+                            await PushService.Instance.AddTag(person.PersonId, PushService.DeadlineTag(person.Configuration.DeadlineReminderHours));
+                        }
                         break;
                     }
                 case "NotifyWhenScored":
@@ -203,7 +213,7 @@
         [Route("api/person/push/register")]
         public async Task<HttpResponseMessage> RegisterPush(PushRequest req)
         {
-         
+
             req.Device = req.Device.ToLowerInvariant().Trim();
 
             var reg = await PushService.Instance.AddOrUpdateRegistration(req, null, this.Requestor.PersonId);

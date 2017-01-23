@@ -4,7 +4,7 @@
     background-image: url(/Content/Images/bgPlain.png);
     background-position: top left;
     background-repeat: no-repeat;
-    background-color: #fff;
+    background-color: #b5b4b4;
 }
 
 a {
@@ -23,9 +23,10 @@ div.sub-nav {
     height: 40px;
 }
 
-div.navbar-collapse{
+div.navbar-collapse {
     /*background-color: #fff;*/
 }
+
 .navbar {
     margin-bottom: 0;
     border-radius: 0;
@@ -86,12 +87,14 @@ div.alert a {
 }
 
 
-     .btn-primary:focus, .btn-primary:active {
+    .btn-primary:focus, .btn-primary:active {
         background-color: #964514;
     }
-.btn-primary:hover{
-    background-color: #000;
-}
+
+    .btn-primary:hover {
+        background-color: #000;
+    }
+
 .btn {
     border-radius: 0 !important;
 }
@@ -157,7 +160,7 @@ div.landing-lg {
     height: calc(100%);
     position: absolute;
     width: 100%;
-        padding: 0;
+    padding: 0;
 }
 
 
@@ -186,7 +189,7 @@ div.mobile-art-bottom {
     display: block;
 }
 
-div.dl-buttons-sm{
+div.dl-buttons-sm {
     position: absolute;
     text-align: center;
     width: 100%;
@@ -199,14 +202,22 @@ div.dl-buttons-lg {
     position: absolute;
     text-align: center;
     width: 100%;
-    bottom: 150px;    
+    bottom: 150px;
     height: auto;
     z-index: 100;
 }
 
-div.dl-buttons-sm a, div.dl-buttons-lg a{
-    margin: 10px;
-}
-div.dl-buttons-lg a{
-    margin-right: 100px;
+    div.dl-buttons-sm a, div.dl-buttons-lg a {
+        margin: 10px;
+    }
+
+    div.dl-buttons-lg a {
+        margin-right: 100px;
+    }
+
+
+@media(max-width: 768px) {
+    div.navbar-collapse {
+        background-color: #fff;
+    }
 }

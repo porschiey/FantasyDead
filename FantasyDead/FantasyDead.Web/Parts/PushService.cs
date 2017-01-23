@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -97,6 +98,24 @@ namespace FantasyDead.Web.Parts
             }
         }
 
+        public async Task RemoveTag(string id, string tag)
+        {
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(tag))
+                throw new ArgumentException("Id or tag is null.");
+
+            var regs = await this.hub.GetRegistrationsByTagAsync(id, 1);
+            if (!regs.Any())
+                throw new ArgumentException("PersonId tag not found.", nameof(id));
+
+            var actual = regs.First();
+
+            if (!actual.Tags.Contains(tag))
+            {
+                actual.Tags.Remove(tag);
+                await this.hub.UpdateRegistrationAsync(actual);
+            }
+        }
+
         public async Task SendNotification(string tag, string message, string device)
         {
             await this.SendNotification(tag, message, "The Fantasy Dead", device);
@@ -109,13 +128,22 @@ namespace FantasyDead.Web.Parts
             //first, fetch pre-existing reminders
             if (this.cache.KeyExists(redisKey))
             {
+
                 var reminderIdsJson = this.cache.StringGet(redisKey);
                 var reminderIds = JsonConvert.DeserializeObject<List<string>>(reminderIdsJson);
                 foreach (var id in reminderIds)
                 {
-                    await this.hub.CancelNotificationAsync(id);
-                }
+                    try
+                    {
+                        await this.hub.CancelNotificationAsync(id);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!ex.Message.Contains("404")) //it's coo, don't need it then
+                            throw;
+                    }
 
+                }
                 this.cache.KeyDelete(redisKey);
             }
 

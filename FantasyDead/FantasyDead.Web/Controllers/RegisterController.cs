@@ -130,7 +130,7 @@
                     return this.Request.CreateErrorResponse(HttpStatusCode.Forbidden, "This account has been banned.");
 
                 var foundId = person.Identities.FirstOrDefault(i => i.PlatformUserId == id.PlatformUserId);
-                if (foundId.Credentials != id.Credentials)
+                if (foundId.Credentials != id.Credentials && id.PlatformName == Platform.Custom.ToString())
                     return this.Request.CreateErrorResponse(HttpStatusCode.Unauthorized, "No account found matching those credentials.");
 
                 var token = this.crypto.CreateToken(person.Id, person.Username, person.Role);

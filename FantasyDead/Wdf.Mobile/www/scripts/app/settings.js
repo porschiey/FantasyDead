@@ -71,10 +71,22 @@
 
             $scope.emailValid = false;
             $scope.checkEmail = function () {
-                var em = $rootScope.user.Email;
+                var em = $rootScope.user.Email.trim();
                 if (em === null)
                     return false;
-                $scope.emailValid = (em !== '' && (em.indexOf('@') !== -1 && em.indexOf('.') !== -1));
+                $scope.emailValid = (em !== ' ' && em !== '' && (em.indexOf('@') !== -1 && em.indexOf('.') !== -1));
+            };
+
+            $scope.changeEmail = function () {
+                $('#changeEmailModal').modal();
+            }
+
+            $scope.saveEmail = function () {
+                $('#changeEmailModal').modal('hide');
+                var req = { Email: $rootScope.user.Email };
+                $http.post($rootScope.fdApi + 'api/person/email', req).then(function (response) {
+                    $rootScope.saveUserChanges();
+                }).catch($rootScope.handleError);
             };
 
             //Finalizes registration, starts tutorial messages
@@ -91,6 +103,8 @@
                 $scope.tutorialStep2MessageLoop();
                 $scope.nextPage();
             };
+
+            $scope.dlh = $rootScope.generateDeadlineHoursOption();
 
 
             //tutorial loop tech

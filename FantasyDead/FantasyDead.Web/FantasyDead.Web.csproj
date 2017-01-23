@@ -1151,6 +1151,7 @@
     <Content Include="Views\Admin\Index.cshtml" />
     <Content Include="Views\Home\Legal.cshtml" />
     <Content Include="Views\Home\Privacy.cshtml" />
+    <Content Include="Views\Home\Support.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

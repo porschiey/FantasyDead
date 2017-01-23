@@ -131,15 +131,15 @@
 
             payload.RelatedShow = (this.db.FetchShowData().Content as List<Show>)[0]; //scoping down to first show for now
 
-            var characters = this.db.FetchCharacters(payload.RelatedShow.Id).Content as List<Character>;
-
-            payload.Characters = characters.Where(c => c.DeadDateIso == null).ToList();
+            var characters = (this.db.FetchCharacters(payload.RelatedShow.Id).Content as List<Character>).Select(c=>c.Clone()).ToList();
 
             var currentEp = this.db.FetchNextAvailableEpisode(payload.RelatedShow.Id);
 
             var episodes = (this.db.FetchShowData().Content as List<Show>)[0].Seasons.SelectMany(s => s.Episodes).ToList();
 
             payload.History = HistoryItem.EstablishHistory(payload.Person.Events, episodes, characters);
+            payload.Characters = characters.Where(c => c.DeadDateIso == null).ToList();
+
 
             if (this.Requestor.PersonId == personId)
             {
@@ -166,7 +166,6 @@
 
                             continue;
                         }
-                        character.Usage++;
 
                         slot.CharacterName = character.Name;
                         slot.CharacterPictureUrl = character.PrimaryImageUrl;

@@ -1,6 +1,6 @@
 ﻿<div class="modal animated flipInY" tabindex="-1" role="dialog" id="friendModal">
     <div class="modal-dialog modal-sm" role="document" style="height: 90%;">
-        <div class="modal-content " style="padding: 15px; font-size: 12pt;">
+        <div class="modal-content " style="padding: 15px; font-size: 12pt; overflow-x: hidden;">
 
             <h2>Find a friend</h2>
             <span class="help-block">
@@ -129,7 +129,7 @@
                     </span>
                     {{i.CurrentRank}}
                 </td>
-                <td>
+                <td style="max-width: 150px; overflow-x: hidden;">
                     <a ng-click="showOptions(i)">
                         <div class="avatar-tiny">
                             <img ng-src="{{i.AvatarUrl}}" />

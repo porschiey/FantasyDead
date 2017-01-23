@@ -272,7 +272,7 @@ img.portrait-small {
 div.avatar-med {
     height: 150px;
     width: 150px;
-    border-radius: 25px;
+    border-radius: 75px;
     position: relative;
     display: inline-block;
 }
@@ -288,12 +288,14 @@ div.avatar-tiny img {
 
 div.avatar-small img {
     border-radius: 25px;
+    max-height: 50px; 
+    max-width: 50px;   
 }
 
 div.avatar-small img, div.avatar-tiny img,
 div.avatar-med img {
-    width: 100%;
-    height: auto;
+    height: 100%;
+    width: auto;
 }
 
 span.helper-block {
@@ -321,7 +323,7 @@ div.notification-modal {
 }
 
 h3.gray-header {
-    color: #9b9b9b;
+    color: #333;
     font-size: 18pt;
     font-weight: lighter;
     font-family: "Segoe UI";
@@ -388,6 +390,9 @@ span.character-name {
     border: 1px solid #e7e7e7;
 }
 
+.list-group-item-text{
+    color: #333 !important;
+}
 
 td.lbCell {
     height: 30px !important;
@@ -437,26 +442,26 @@ li.tabbed {
 }
 
 
-.smallest-text{
+.smallest-text {
     font-size: 8pt;
 }
 
 
-.no-padding{
+.no-padding {
     padding: 0;
 }
 
-.kill-margin{
-    margin:0;
+.kill-margin {
+    margin: 0;
 }
 
-.revert-fluid-padding{
+.revert-fluid-padding {
     margin-left: -15px;
     margin-right: -15px;
 }
 
 
-div.score-banner{
+div.score-banner {
     width: calc(100% - 20px);
     padding: 5px 10px;
     margin: 10px;
@@ -464,7 +469,7 @@ div.score-banner{
 }
 
 
-a.center-fixed{
+a.center-fixed {
     width: 70%;
     margin: 10px;
 }
@@ -472,4 +477,20 @@ a.center-fixed{
 a.lit {
     background-color: #7d5200;
     color: #f2f2f2;
+}
+
+
+div.death-slot-overlay{
+    position: absolute;
+    z-index: 99;
+    height: 100%;
+    width: 100%;
+    background-image: url(../images/deathSlotOverlay.png);
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: block;
+}
+
+tr.disabled {
+    background-color: #cdcdcd !important;    
 }

@@ -37,6 +37,12 @@
         public string PrimaryImageUrl { get; set; }
 
         public int Usage { get; set; }
+
+        public Character Clone()
+        {
+            var c = this.MemberwiseClone() as Character;
+            return c;
+        }
     }
 
     public class CharacterDto : Character

@@ -83,6 +83,28 @@
     </div>
 </div>
 
+
+<div class="modal fade bs-example-modal-sm" data-backdrop="static" tabindex="-1" role="dialog" id="changeEmailModal">
+    <div class="modal-dialog modal-sm" role="document" style="height: 90%;">
+        <div class="modal-content" style="height: 100%; padding: 10px;">
+            <h3 class="gray-header" style="color: #333">
+                Change Email
+            </h3>
+            <span class="help-block">
+                We only store your email in case you need to recover your account. No tedious email confirmations or anything.
+            </span> <br />
+            <input type="email" ng-model="user.Email" class="form-control" placeholder="new@email.com" ng-change="checkEmail()" ng-model-options="{debounce: 500}" />
+            <div class="alert alert-danger" ng-show="!emailValid">
+                Please enter a valid email.
+            </div>
+            <br /><br />
+            <a class="btn btn-primary btn-lg" ng-click="saveEmail()" ng-show="emailValid">
+                Save Email
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid" ng-show="tutorialPage === 2">
     <h3 class="gray-header">HOW IT WORKS</h3>
 
@@ -131,9 +153,9 @@
             <p class="list-group-item" ng-show="user.Configuration.ReceiveNotifications">
                 Roster Lock Reminder<br />
                 <span class="helper-block">How much advance warning would you like?</span>
-                <select id="pushRemindHours" ng-model="deadlineLockHours" style="height: 30px;"
+                <select id="pushRemindHours" ng-model="dlh" style="height: 30px;"
                         ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                        ng-change="updateConfiguration('DeadlineReminderHours', deadlineLockHours.hours)"></select>
+                        ng-change="setDeadlineHours(dlh.hours)"></select>
             </p>
             <a class="list-group-item" ng-click="toggleNotifyWhenScored()" ng-show="user.Configuration.ReceiveNotifications">
                 Notify when an episode is scored
@@ -149,10 +171,18 @@
         <div class="list-group">
             <a class="list-group-item" href="https://thefantasydead.com/" target="_blank">Website</a>
             <a class="list-group-item" href="https://thefantasydead.com/home/privacy" target="_blank">Privacy</a>
-            <a class="list-group-item" href="https://thefantasydead.com/home/legal" target="_blank">Disclaimer</a>
             <a class="list-group-item" ng-click="showBetaDisclaimer()">Excuse the mess</a>
-            <a class="list-group-item" ng-click="rateApp()">Rate this app</a>
-            <p class="list-group-item">Version 0.61</p>
+            <!--<a class="list-group-item" ng-click="rateApp()">Rate this app</a>-->
+            <div class="list-group-item" style="font-size: 10pt;">
+                <b>Feedback / Bugs</b>
+                <br /> We're still in beta. Thanks for putting up with any blemishes. <br />
+                If you have feedback or want to report a bug, please <a href="https://thefantasydead.com/home/support" target="_blank">click here</a>.
+            </div>
+            <div class="list-group-item" style="font-size: 8pt;">
+                "The Walking Dead" TV Show is owned/published by AMC.
+                <a href="https://thefantasydead.com/home/legal" target="_blank">Read legal disclaimer.</a>
+            </div>
+            <p class="list-group-item" style="font-size: 8pt;">Version 0.61</p>
         </div>
     </div>
 

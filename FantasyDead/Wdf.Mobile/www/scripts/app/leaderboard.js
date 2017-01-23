@@ -5,6 +5,22 @@
         document.addEventListener("deviceready", function () {
             $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.Token;
 
+
+            var lbHas = function (id) {
+                if (!$scope.leaderboard)
+                    return false;
+
+                var has = false;
+                $.each($scope.leaderboard, function (ix, i) {
+                    if (id === i.PersonId) {
+                        has = true;
+                        return false;
+                    }
+                });
+
+                return has;
+            };
+
             $scope.leaderboard = [];
             $scope.showing = 'all';
             $scope.fetching = false;
@@ -35,7 +51,8 @@
                                 $scope.twoWeeksAgoName = i.EpisodeScores[1].EpisodeName;
                             }
 
-                            $scope.leaderboard.push(i);
+                            if (!lbHas(i.PersonId))
+                                $scope.leaderboard.push(i);
                         });
 
                         $scope.lbContToken = response.data.ContinuationToken;
@@ -67,10 +84,10 @@
                     return;
 
                 $scope.searchResults = [];
-                     
+
                 $scope.searching = true;
                 $http.get($rootScope.fdApi + 'api/person/friend/search/' + s).then(function (response) {
-                 
+
                     $scope.searchResults = response.data;
                     $scope.searching = false;
                 }).catch(function (error) {
@@ -133,6 +150,7 @@
                 }).catch(function (error) {
                     $rootScope.handleError(error);
                     $rootScope.showError(error);
+                    $scope.friendWork = false;
                 });
 
             };

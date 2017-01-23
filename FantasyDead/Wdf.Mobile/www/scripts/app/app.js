@@ -25,8 +25,8 @@
     app.run(['$rootScope', '$cordovaOauth', '$location', '$http', function ($rootScope, $cordovaOauth, $location, $http) {
         document.addEventListener("deviceready", function () {
 
-            //$rootScope.fdApi = 'http://192.168.1.2/';
-            $rootScope.fdApi = 'http://thefantasydead.com/';
+            $rootScope.fdApi = 'http://192.168.1.2/';
+            //$rootScope.fdApi = 'http://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -47,11 +47,6 @@
                             console.log('user is already logged in');
                             $rootScope.authorize($rootScope.user.Token);
                         }
-
-
-                        $rootScope.deadlineLockHours = null;
-                        if ($rootScope.user.Configuration.DeadlineReminderHours > 0)
-                            $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineReminderHours, d: $rootScope.user.Configuration.DeadlineReminderHours + ' hour(s) before' };
 
                     } catch (e) {
                         console.error(JSON.stringify(e));
@@ -170,9 +165,6 @@
                     $rootScope.user.isNewUser = u.Role === 1;
                     console.log('user...: ' + JSON.stringify($rootScope.user));
 
-                    $rootScope.deadlineLockHours = null;
-                    if ($rootScope.user.Configuration.DeadlineLockHours > 0)
-                        $rootScope.deadlineLockHours = { hours: $rootScope.user.Configuration.DeadlineLockHours, d: $rootScope.user.Configuration.DeadlineLockHours + ' hour(s) before' };
                     $rootScope.saveUserChanges();
 
                     if ($rootScope.user.isNewUser) {
@@ -499,6 +491,19 @@
                 $location.path('/roster/' + personId);
             };
 
+
+            $rootScope.generateDeadlineHoursOption = function () {
+
+                if ($rootScope.user.Configuration.DeadlineReminderHours === 0)
+                    return { hours: 0, d: 'Don\'t notify me' };
+
+                return { hours: $rootScope.user.Configuration.DeadlineReminderHours, d: $rootScope.user.Configuration.DeadlineReminderHours + ' hour(s) before' };;
+            };
+            $rootScope.setDeadlineHours = function (v) {
+                $rootScope.user.Configuration.DeadlineReminderHours = v;
+                $rootScope.updateConfiguration('DeadlineReminderHours', v);
+            };
+
             //fires configuration change to api
             $rootScope.updateConfiguration = function (key, value) {
                 $http.post($rootScope.fdApi + 'api/person/config/' + key, value).then(function (response) {
@@ -511,6 +516,7 @@
 
             //minor object setup
             $rootScope.preLockHours = [
+                  { hours: 0, d: 'Don\'t notify me' },
                 { hours: 1, d: '1 Hour Before' },
                 { hours: 2, d: '2 Hours Before' },
                 { hours: 4, d: '4 Hours Before' },

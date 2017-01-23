@@ -18,11 +18,13 @@
                         </tr>
                         <tr ng-repeat="ch in characters"
                             ng-click="selectChar(ch.Id)"
-                            ng-class="{'disabled': charIsSlotted(ch.Id)}">
+                            ng-class="{'disabled': (charIsSlotted(ch.Id) || ch.usage > 2)}">
                             <td style="font-size: 14pt; line-height: 50px;">
                                 <img ng-src="{{ch.PrimaryImageUrl}}" class="portrait-small" style="float: left;">
                                 <span style="padding-left: 10px;">{{ch.Name}}</span>
-
+                                <i class="fa "
+                                   ng-show="(charIsSlotted(ch.Id) || ch.usage > 2)"
+                                   ng-class="{'fa-check': charIsSlotted(ch.Id), 'fa-ban': ch.usage > 2 }"></i>
                             </td>
                             <td>
                                 {{3 - ch.Usage}} uses left
@@ -87,9 +89,9 @@
                 </p>
                 <p>
                     <b>How much advance warning do you want?<br /></b>
-                    <select id="pushRemindHours" ng-model="deadlineLockHours" style="height: 30px;"
+                    <select id="pushRemindHours" ng-model="dlh" style="height: 30px;"
                             ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                            ng-change="updateDeadlineHours('DeadlineReminderHours', deadlineLockHours.hours)"></select>
+                            ng-change=""></select>
                     <br />
                     or &ensp;
                     <a class="btn btn-default btn-default-borded" ng-click="bailAskNotify(0)">
@@ -143,19 +145,21 @@
             <i class="fa fa-refresh"></i>
         </a>
 
-        <h3 class="gray-header" ng-show="showing === 'current'">
+        <h3 class="gray-header" style="color: #333;" ng-show="showing === 'current'">
             <span style="font-weight:bolder;">Roster:</span> {{episode.Name}}
         </h3>
         <div class="text-center" ng-show="showing === 'current'">
 
-        <span class="help-block" ng-if="episode === null">
-            Looks like there aren't any more episodes for now...
-        </span>
+            <span class="help-block" ng-if="episode === null">
+                Looks like there aren't any more episodes for now...
+            </span>
 
             <div class="col-xs-6 slot-host" ng-repeat="slot in slots">
 
                 <div id="{{slot.Id}}">
                     <div class="front animated flipInY" ng-click="flipSlot(slot)">
+                        <div class="death-slot-overlay" ng-if="slot.Occupied && slot.DeathSlot">
+                        </div>
                         <img ng-src="{{slot.CharacterPictureUrl}}" class="slot-img " ng-class="{'occupied': slot.Occupied}" />
                         <span class="character-name">
                             <br />

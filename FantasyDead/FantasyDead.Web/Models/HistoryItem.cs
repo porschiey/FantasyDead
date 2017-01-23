@@ -20,7 +20,7 @@ namespace FantasyDead.Web.Models
 
         public static List<HistoryItem> EstablishHistory(List<CharacterEventIndex> events, List<Episode> episodes, List<Character> characters)
         {
-            var history = new Dictionary<string,HistoryItem>();
+            var history = new Dictionary<string, HistoryItem>();
 
             foreach (var ev in events)
             {
@@ -37,6 +37,7 @@ namespace FantasyDead.Web.Models
                 if (pick == null)
                 {
                     var ch = characters.First(c => c.Id == ev.CharacterId);
+                    ch.Usage++;
                     pick = new CharacterHistoryPick
                     {
 
@@ -55,7 +56,7 @@ namespace FantasyDead.Web.Models
                 history[ev.EpisodeId].TotalScore += ev.Points;
             }
 
-            return history.Select(h=>h.Value).ToList();
+            return history.Select(h => h.Value).ToList();
         }
     }
 
