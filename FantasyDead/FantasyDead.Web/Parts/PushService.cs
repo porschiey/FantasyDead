@@ -1,6 +1,8 @@
 ﻿using FantasyDead.Data.Documents;
 using FantasyDead.Web.Models;
 using Microsoft.Azure.NotificationHubs;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -13,10 +15,12 @@ namespace FantasyDead.Web.Parts
     public class PushService
     {
         private readonly NotificationHubClient hub;
+        private readonly IDatabase cache;
 
         public PushService()
         {
             this.hub = NotificationHubClient.CreateClientFromConnectionString(ConfigurationManager.AppSettings["notificationHub"], "push");
+            this.cache = RedisCache.Connection.GetDatabase();
         }
 
         /// <summary>
@@ -38,27 +42,35 @@ namespace FantasyDead.Web.Parts
         /// <returns></returns>
         public async Task<string> AddOrUpdateRegistration(PushRequest req, int? deadlineReminderHours, string personId)
         {
-
-            RegistrationDescription reg;
-            switch (req.Device)
+            try
             {
-                case "android":
-                    {
-                        reg = new GcmRegistrationDescription(req.RegistrationId);
-                        break;
-                    }
-                default:
-                    {
-                        throw new ArgumentException("Push notification is not supported for this device");
-                    }
-            }
-            reg.Tags = new HashSet<string>();
-            reg.Tags.Add(personId);
-            if (deadlineReminderHours.HasValue)
-                reg.Tags.Add(PushService.DeadlineTag(deadlineReminderHours.Value));
+                RegistrationDescription reg;
+                switch (req.Device)
+                {
+                    case "android":
+                        {
+                            reg = new GcmRegistrationDescription(req.RegistrationId);
+                            break;
+                        }
+                    default:
+                        {
+                            throw new ArgumentException("Push notification is not supported for this device");
+                        }
+                }
+                reg.Tags = new HashSet<string>();
+                reg.Tags.Add(personId);
+                if (deadlineReminderHours.HasValue)
+                    reg.Tags.Add(PushService.DeadlineTag(deadlineReminderHours.Value));
 
-            reg = await this.hub.CreateOrUpdateRegistrationAsync(reg);
-            return reg.RegistrationId;
+                reg = await this.hub.CreateRegistrationAsync(reg);
+                return reg.RegistrationId;
+
+            }
+            catch (Exception ex)
+            {
+                //log it
+                throw;
+            }
         }
 
         public async Task RemoveRegistration(string id)
@@ -89,7 +101,63 @@ namespace FantasyDead.Web.Parts
         {
             await this.SendNotification(tag, message, "The Fantasy Dead", device);
         }
-        
+
+
+        public async Task ScheduleReminders(DateTime locktime)
+        {
+            const string redisKey = "reminder-ids";
+            //first, fetch pre-existing reminders
+            if (this.cache.KeyExists(redisKey))
+            {
+                var reminderIdsJson = this.cache.StringGet(redisKey);
+                var reminderIds = JsonConvert.DeserializeObject<List<string>>(reminderIdsJson);
+                foreach (var id in reminderIds)
+                {
+                    await this.hub.CancelNotificationAsync(id);
+                }
+
+                this.cache.KeyDelete(redisKey);
+            }
+
+            var tags = new List<int>
+            {
+                1, 2, 4, 6, 12, 24, 48, 72
+            };
+
+            var scheduledIds = new List<string>();
+            foreach (var tag in tags)
+            {
+                try
+                {
+
+                    var gcmReminder = @"{'data':{'message':'Don\'t forget to select your characters this week.', 'title':'Rosters lock in " + tag + " hour(s)!'}}";
+                    var appleReminder = @"{'aps':{'alert':'Don\'t forget, rosters lock in " + tag + " hour(s)!'}}";
+
+                    var sendDate = locktime.Subtract(TimeSpan.FromMinutes(tag));
+                    if (sendDate < DateTime.UtcNow)
+                        continue;
+
+                    Notification gcmNote = new GcmNotification(gcmReminder);
+                    var gcmScheduled = await this.hub.ScheduleNotificationAsync(gcmNote, sendDate, DeadlineTag(tag));
+
+                    Notification appleNote = new GcmNotification(appleReminder);
+                    var appleScheduled = await this.hub.ScheduleNotificationAsync(gcmNote, sendDate, DeadlineTag(tag));
+
+                    scheduledIds.Add(gcmScheduled.ScheduledNotificationId);
+                    scheduledIds.Add(appleScheduled.ScheduledNotificationId);
+
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+            }
+
+            var newReminderIdsJson = JsonConvert.SerializeObject(scheduledIds);
+            this.cache.StringSet(redisKey, newReminderIdsJson);
+        }
+
         public async Task SendNotification(string tag, string message, string title, string device)
         {
 
@@ -97,13 +165,13 @@ namespace FantasyDead.Web.Parts
             {
                 case "android":
                     {
-                        var json = @"{'data':{'message':'"+ message +"', 'title':'"+ title +"'}}";
+                        var json = @"{'data':{'message':'" + message + "', 'title':'" + title + "'}}";
                         await this.hub.SendGcmNativeNotificationAsync(json, tag);
                         break;
                     }
                 case "ios":
                     {
-                        var json = @"{'aps':{'alert':'"+ message +"'}}";
+                        var json = @"{'aps':{'alert':'" + message + "'}}";
                         await this.hub.SendAppleNativeNotificationAsync(json, tag);
                         break;
                     }

@@ -133,7 +133,7 @@
                 <span class="helper-block">How much advance warning would you like?</span>
                 <select id="pushRemindHours" ng-model="deadlineLockHours" style="height: 30px;"
                         ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                        ng-change="updateConfiguration('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
+                        ng-change="updateConfiguration('DeadlineReminderHours', deadlineLockHours.hours)"></select>
             </p>
             <a class="list-group-item" ng-click="toggleNotifyWhenScored()" ng-show="user.Configuration.ReceiveNotifications">
                 Notify when an episode is scored

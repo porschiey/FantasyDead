@@ -87,9 +87,9 @@
                 </p>
                 <p>
                     <b>How much advance warning do you want?<br /></b>
-                    <select id="pushRemindHours" ng-model="user.Configuration.DeadlineReminderHours" style="height: 30px;"
+                    <select id="pushRemindHours" ng-model="deadlineLockHours" style="height: 30px;"
                             ng-options="lockO as lockO.d for lockO in preLockHours track by lockO.hours"
-                            ng-change="updateDeadlineHours('DeadlineReminderHours', user.Configuration.DeadlineReminderHours.hours)"></select>
+                            ng-change="updateDeadlineHours('DeadlineReminderHours', deadlineLockHours.hours)"></select>
                     <br />
                     or &ensp;
                     <a class="btn btn-default btn-default-borded" ng-click="bailAskNotify(0)">

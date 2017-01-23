@@ -203,7 +203,7 @@
         [Route("api/person/push/register")]
         public async Task<HttpResponseMessage> RegisterPush(PushRequest req)
         {
-            this.InitializeHub();
+         
             req.Device = req.Device.ToLowerInvariant().Trim();
 
             var reg = await PushService.Instance.AddOrUpdateRegistration(req, null, this.Requestor.PersonId);
@@ -231,7 +231,6 @@
         [Route("api/person/push/cancel")]
         public async Task<HttpResponseMessage> CancelPush()
         {
-            this.InitializeHub();
 
             var person = this.db.GetPerson(this.Requestor.PersonId);
             if (string.IsNullOrWhiteSpace(person.PushNotificationData))
@@ -254,9 +253,5 @@
         }
 
 
-        private void InitializeHub()
-        {
-            this.hub = NotificationHubClient.CreateClientFromConnectionString(ConfigurationManager.AppSettings["notificationHub"], "push");
-        }
     }
 }

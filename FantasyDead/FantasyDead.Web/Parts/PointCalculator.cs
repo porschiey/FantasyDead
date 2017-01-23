@@ -214,7 +214,7 @@
                         if (person.Configuration.NotifyWhenScored)
                         {
                             var verb = scoreDelta > 0 ? "gained" : "lost";
-                            await PushService.Instance.SendNotification(u.Key, $"You {verb} {scoreDelta} points!", person.Configuration.DeviceType);
+                            await PushService.Instance.SendNotification(u.Key, $"You {verb} {scoreDelta} points for {episode.Name}", person.Configuration.DeviceType);
                         }
                     }
                     var prog = this.GetProgress(calcId) + (int)Math.Round(userChunk);

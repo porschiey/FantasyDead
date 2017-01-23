@@ -3,6 +3,7 @@
     using App_Start;
     using Data;
     using Data.Documents;
+    using Parts;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -14,7 +15,7 @@
     /// <summary>
     /// Controller responsible for configuration the shows, seasons, and episodes. (Episode CRUD)
     /// </summary>
-    [ApiAuthorization(requiredRole: (int) PersonRole.Admin)]
+    [ApiAuthorization(requiredRole: (int)PersonRole.Admin)]
     public class ShowController : BaseApiController
     {
         private readonly DataContext db;
@@ -81,7 +82,14 @@
             if (string.IsNullOrWhiteSpace(episode.Id))
                 episode.Id = Guid.NewGuid().ToString();
 
-            return this.ConvertDbResponse(await this.db.UpsertEpisode(episode));
+            var dbResponse = await this.db.UpsertEpisode(episode);
+
+            if (dbResponse.StatusCode == HttpStatusCode.OK)
+            {
+                await PushService.Instance.ScheduleReminders(episode.LockDate);
+            }
+
+            return this.ConvertDbResponse(dbResponse);
         }
 
         private Season ForceIdMapping(Season season, string showId)
