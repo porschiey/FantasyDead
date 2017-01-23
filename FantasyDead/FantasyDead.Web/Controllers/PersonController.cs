@@ -4,6 +4,7 @@
     using Data.Documents;
     using Microsoft.Azure.NotificationHubs;
     using Models;
+    using Parts;
     using System;
     using System.Collections.Generic;
     using System.Configuration;
@@ -177,6 +178,7 @@
                 case "DeadlineReminderHours":
                     {
                         person.Configuration.DeadlineReminderHours = Convert.ToInt32(value);
+                        await PushService.Instance.AddTag(person.PersonId, PushService.DeadlineTag(person.Configuration.DeadlineReminderHours));
                         break;
                     }
                 case "NotifyWhenScored":
@@ -204,30 +206,16 @@
             this.InitializeHub();
             req.Device = req.Device.ToLowerInvariant().Trim();
 
-            RegistrationDescription reg;
-            switch (req.Device)
-            {
-                case "android":
-                    {
-                        reg = new GcmRegistrationDescription(req.RegistrationId);
-                        break;
-                    }
-                default:
-                    {
-                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Push notification is not supported for this device");
-                    }
-            }
-            reg.Tags = new HashSet<string>();
-            reg.Tags.Add(this.Requestor.PersonId);
-            reg = await this.hub.CreateRegistrationAsync(reg);
+            var reg = await PushService.Instance.AddOrUpdateRegistration(req, null, this.Requestor.PersonId);
 
             var person = this.db.GetPerson(this.Requestor.PersonId);
-            person.PushNotificationData = reg.RegistrationId;
+            person.PushNotificationData = reg;
 
             if (person.Configuration == null)
                 person.Configuration = new PersonConfiguration();
 
             person.Configuration.ReceiveNotifications = true;
+            person.Configuration.DeviceType = req.Device;
 
             await this.db.UpdatePerson(person);
 
@@ -250,9 +238,7 @@
                 return this.Request.CreateResponse(HttpStatusCode.OK);
             try
             {
-
-                await this.hub.DeleteRegistrationAsync(person.PushNotificationData);
-
+                await PushService.Instance.RemoveRegistration(person.PushNotificationData);
             }
             catch (Exception ex)
             {

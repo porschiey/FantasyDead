@@ -8,6 +8,9 @@
     using System;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Drawing;
+    using System.Drawing.Drawing2D;
+    using System.Drawing.Imaging;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -204,27 +207,40 @@
                 var extension = Path.GetExtension(file.FileName);
                 var fullName = fileName + extension;
 
+                Stream imgStream = new MemoryStream();
+                file.InputStream.CopyTo(imgStream);
 
                 //validate file
                 if (folder == "avs")
                 {
-                    Stream imgStream = new MemoryStream();
-                    file.InputStream.CopyTo(imgStream);
-                    var img = System.Drawing.Image.FromStream(imgStream);
-                    if (img.Width > 200 || img.Height > 200)
-                        return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "The avatar dimensions are too large.");
-
                     if (file.ContentLength > 1000000)
                         return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, "The file is too large. It must be less than 1MB");
 
                     if (!acceptedExtensions.Contains(extension.ToLowerInvariant()))
                         return this.Request.CreateErrorResponse(HttpStatusCode.BadRequest, $"The file must be one of the following types: {string.Join(", ", acceptedExtensions)}");
+               
+                    var img = System.Drawing.Image.FromStream(imgStream);
+                    if (img.Width > 200 || img.Height > 200)
+                    {
+
+                        var newWidth = Math.Round((150.00 / img.Height) * img.Width);
+                        var newImg = this.ResizeImage(img, (int)newWidth, 150);
+
+                        var qualEncoder =Encoder.Quality;
+                        var jpgEncoder = GetEncoder(ImageFormat.Jpeg);
+                        var enParams = new EncoderParameters(1);
+                        var thisEncParam = new EncoderParameter(qualEncoder, 50L);
+                        enParams.Param[0] = thisEncParam;
+
+                        imgStream = new MemoryStream();
+                        newImg.Save(imgStream, jpgEncoder, enParams);
+                        extension = ".jpeg";
+                        imgStream.Position = 0;
+                    }
 
                     fileName = this.Requestor.PersonId;
                     fullName = fileName + extension;
-                    imgStream.Dispose();
 
-                    file.InputStream.Position = 0; //to be read again            
                 }
 
 
@@ -236,7 +252,7 @@
                 var blockBlob = container.GetBlockBlobReference(fullName);
                 using (var stream = file.InputStream)
                 {
-                    blockBlob.UploadFromStream(file.InputStream);
+                    blockBlob.UploadFromStream(imgStream);
                 }
 
 
@@ -255,6 +271,44 @@
                 return this.Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Failed to upload the file. Internal error. ");
             }
 
+        }
+
+        private ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ResizeImage(Image image, int width, int height)
+        {
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = CompositingMode.SourceCopy;
+                graphics.CompositingQuality = CompositingQuality.HighSpeed;
+                graphics.InterpolationMode = InterpolationMode.Default;
+                graphics.SmoothingMode = SmoothingMode.HighSpeed;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
+
+                using (var wrapMode = new ImageAttributes())
+                {
+                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
         }
     }
 }

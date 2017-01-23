@@ -280,6 +280,7 @@
     <Compile Include="Models\StatEvent.cs" />
     <Compile Include="Models\UpdateEmailReq.cs" />
     <Compile Include="Parts\PointCalculator.cs" />
+    <Compile Include="Parts\PushService.cs" />
     <Compile Include="Parts\RedisCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />

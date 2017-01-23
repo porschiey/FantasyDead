@@ -4,11 +4,13 @@
     using Data.Configuration;
     using Data.Documents;
     using Data.Models;
+    using Microsoft.Azure.NotificationHubs;
     using Newtonsoft.Json;
     using StackExchange.Redis;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Linq;
     using System.Runtime.Caching;
     using System.Threading.Tasks;
@@ -18,6 +20,8 @@
     {
         private readonly DataContext db;
         private readonly IDatabase cache;
+
+
         /// <summary>
         /// Default constructor.
         /// </summary>
@@ -25,6 +29,7 @@
         {
             this.db = db;
             this.cache = RedisCache.Connection.GetDatabase();
+
         }
 
 
@@ -200,9 +205,18 @@
                 });
 
                 var userChunk = 30.00 / users.Count;
-                Parallel.ForEach(users, (u) =>
+                Parallel.ForEach(users, async (u) =>
                 {
-                    this.db.AddEventsToPerson(u.Value, u.Key); //this also tallies all the person's events to generate total score
+                    var scoreDelta = await this.db.AddEventsToPerson(u.Value, u.Key); //this also tallies all the person's events to generate total score
+                    if (scoreDelta != 0)
+                    {
+                        var person = this.db.GetPerson(u.Key);
+                        if (person.Configuration.NotifyWhenScored)
+                        {
+                            var verb = scoreDelta > 0 ? "gained" : "lost";
+                            await PushService.Instance.SendNotification(u.Key, $"You {verb} {scoreDelta} points!", person.Configuration.DeviceType);
+                        }
+                    }
                     var prog = this.GetProgress(calcId) + (int)Math.Round(userChunk);
                     this.UpdateProgress(calcId, prog);
                 });

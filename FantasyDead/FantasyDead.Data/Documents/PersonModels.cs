@@ -75,6 +75,8 @@
     {
         public bool ReceiveNotifications { get; set; }
 
+        public string DeviceType { get; set; }
+
         public int DeadlineReminderHours { get; set; }
 
         public bool NotifyWhenScored { get; set; }

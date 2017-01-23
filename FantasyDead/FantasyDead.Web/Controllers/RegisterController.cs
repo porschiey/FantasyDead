@@ -8,6 +8,7 @@
     using Microsoft.ApplicationInsights;
     using Microsoft.ApplicationInsights.DataContracts;
     using Models;
+    using Parts;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -46,6 +47,16 @@
             }
         }
 
+        [HttpGet]
+        [Route("api/register/testPush/{personId}")]
+        public async Task<HttpResponseMessage> TestPush(string personId)
+        {
+            var person = this.db.GetPerson(personId);
+            await PushService.Instance.SendNotification(personId, "This is a test message", person.Configuration.DeviceType);
+
+            return this.Request.CreateResponse(HttpStatusCode.OK);
+        }
+
         /// <summary>
         /// PUT api/register
         /// Attempts to register a user/person. Is async...
@@ -70,7 +81,7 @@
                 JoinedDate = DateTime.UtcNow,
                 Username = req.Username,
                 Events = new List<CharacterEventIndex>(),
-                AvatarPictureUrl = string.Empty,
+                AvatarPictureUrl = "https://fantasydead.blob.core.windows.net/avs/emptyAv.png",
                 Role = (int)PersonRole.NewUser,
                 Email = req.Email,
                 Configuration = new PersonConfiguration()

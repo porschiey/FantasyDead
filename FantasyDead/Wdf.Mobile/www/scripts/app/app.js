@@ -95,12 +95,14 @@
 
             $rootScope.setupPushNotification = function () {
 
+                console.log('setting up push');
                 PushNotification.hasPermission(function (perm) {
                     if (perm.isEnabled) {
                         var pN = PushNotification.init(pushOpts);
-
+                        console.log('push enabled');
                         pN.on('registration', function (data) {
 
+                            console.log('push reg: ' + JSON.stringify(data));
                             var pushReq = { device: 'android', registrationId: data.registrationId };
                             $http.put($rootScope.fdApi + 'api/person/push/register', pushReq).then(function (response) {
                                 $rootScope.user.PushRegistration = data.registrationId;

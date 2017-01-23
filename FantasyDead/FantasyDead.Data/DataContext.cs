@@ -90,6 +90,8 @@
                 if (alreadyExistingPerson != null && !continueDespiteUsername)
                     return DataContextResponse.Error(HttpStatusCode.Conflict, "That username is already taken.");
 
+                if (string.IsNullOrWhiteSpace(person.AvatarPictureUrl))
+                    person.AvatarPictureUrl = "https://fantasydead.blob.core.windows.net/avs/emptyAv.png";
 
                 person.Id = Guid.NewGuid().ToString();
                 foreach (var id in person.Identities)
@@ -165,15 +167,18 @@
         /// </summary>
         /// <param name="events"></param>
         /// <param name="personId"></param>
-        public async void AddEventsToPerson(List<CharacterEventIndex> events, string personId)
+        public async Task<double> AddEventsToPerson(List<CharacterEventIndex> events, string personId)
         {
             var person = this.GetPerson(personId);
             if (person == null)
-                return;
+                return 0;
 
             person.Events.AddRange(events);
-            person.TotalScore = person.Events.Sum(e => e.Points);
+            var newScore = person.Events.Sum(e => e.Points);
+            var delta = newScore - person.TotalScore;
+            person.TotalScore = newScore;
             await this.UpdatePerson(person);
+            return delta;
         }
 
         /// <summary>
