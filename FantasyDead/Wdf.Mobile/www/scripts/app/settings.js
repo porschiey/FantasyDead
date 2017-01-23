@@ -24,6 +24,12 @@
                 $scope.tutorialPage++;
             };
 
+            $scope.rateApp = function () {
+                $('#betaModal').modal();
+                $rootScope.betaExit = new Date(new Date().getTime() + 5000);
+                $rootScope.betaLoop();
+            };
+
             //ends tutorial and marks user ready
             $scope.finishTutorial = function () {
                 $rootScope.isNewUser = false;

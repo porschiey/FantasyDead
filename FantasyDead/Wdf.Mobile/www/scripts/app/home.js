@@ -16,6 +16,13 @@
             };
 
 
+            var runbefore = localStorage.getItem('tfdRunBefore');
+
+            if (!runbefore)
+            {
+                $rootScope.showBetaDisclaimer();
+                localStorage.setItem('tfdRunBefore', 'true');
+            }
 
             $scope.regValid = true;
             $scope.logValid = true;

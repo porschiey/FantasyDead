@@ -126,11 +126,34 @@
                 });
             };
 
+            $rootScope.die = function () {
+                $('#betaModal').modal('hide');
+            };
+
+            $rootScope.betaExit = new Date();
+            $rootScope.betaLoop = function () {
+                if (new Date().getTime() < $rootScope.betaExit.getTime()) {
+
+                    var ms = $rootScope.betaExit.getTime() - new Date().getTime();
+                    var secs = Math.ceil(ms / 1000);
+                    $('#time-left').text(parseInt(secs));
+                    setTimeout($rootScope.betaLoop, 1000);
+                } else {
+                    $('#betaModal').modal('hide');
+                }
+            };
+
+            $rootScope.showBetaDisclaimer = function () {
+                $('#betaModal').modal();
+                $rootScope.betaExit = new Date(new Date().getTime() + 10000);
+                $rootScope.betaLoop();
+            };
 
             //uses login data to authorize with fantasy dead api
             $rootScope.authorize = function (token, noRD) {
-                if (noRD === undefined)
+                if (noRD === undefined) {
                     noRD = false;
+                }
 
                 if (token === undefined && $rootScope.user.loggedIn)
                     token = $rootScope.user.Token;
@@ -179,7 +202,7 @@
 
     app.config(['$routeProvider', '$locationProvider', '$httpProvider', 'ChartJsProvider', function ($routeProvider, $locationProvider, $httpProvider, ChartJsProvider) {
 
-     
+
 
         $routeProvider
             .when('/home',
