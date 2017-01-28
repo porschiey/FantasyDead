@@ -569,7 +569,7 @@
             var classic = currentPicks.Where(p => p.SlotType == (int)SlotType.Classic).ToList();
             var death = currentPicks.Where(p => p.SlotType == (int)SlotType.Death).ToList();
 
-            if (pick.SlotType == (int)SlotType.Death)
+            if (pick.SlotType == (int)SlotType.Death && string.IsNullOrWhiteSpace(swappingCharacterId))
             {
                 var limit = Convert.ToInt32(ConfigurationManager.AppSettings["deathSlots"]);
                 if (death.Count >= limit)

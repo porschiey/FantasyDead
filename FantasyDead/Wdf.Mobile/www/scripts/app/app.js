@@ -26,7 +26,7 @@
         document.addEventListener("deviceready", function () {
 
             $rootScope.fdApi = 'http://192.168.1.2/';
-            $rootScope.fdApi = 'http://thefantasydead.com/';
+            //$rootScope.fdApi = 'http://thefantasydead.com/';
             $rootScope.loading = true;
             var init = function () {
 
@@ -235,9 +235,30 @@
 
     //master controller for nav and global elements/content
     app.controller('masterController', ['$scope', '$rootScope', '$cordovaOauth', '$location', '$http', function ($scope, $rootScope, $cordovaOauth, $location, $http) {
+
+
         document.addEventListener("deviceready", function () {
 
+            //backbutton
+            document.addEventListener("backbutton", function (e) {
 
+                var closedModal = false;
+                $('.modal').each(function () {
+                    if ($(this).hasClass('in')) {
+
+                        if ($(this).attr('id') === 'charModal') {
+                            $rootScope.$emit('flipSlot');
+                        } else {
+                            $(this).modal('hide');
+                            closedModal = true;
+                        }
+                    }
+                });
+
+                if (closedModal)
+                    e.preventDefault();
+
+            });
 
             $rootScope.handleError = function (error) {
                 if (typeof error === 'string')
@@ -529,4 +550,10 @@
         });
     }]);
 })();
+
+
+//document.addEventListener("backbutton", onBackKeyDown, false);
+//function onBackKeyDown(e) {
+//    e.preventDefault();
+//}
 

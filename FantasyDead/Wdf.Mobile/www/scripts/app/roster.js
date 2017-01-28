@@ -151,6 +151,12 @@
                 }
             };
 
+
+            $rootScope.$on('flipSlot', function () {
+
+                $scope.flipSlot($scope.eSlot);
+            });
+
             var findSlotIx = function (id) {
                 var sIx = -1;
 
