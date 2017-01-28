@@ -124,7 +124,9 @@
         [Route("api/person/friend/search/{s}")]
         public async Task<HttpResponseMessage> Search(string s)
         {
-            var people = await this.db.SearchPeople(s);
+            var people = await this.db.SearchPeople(s, this.Requestor.PersonId);
+
+
 
             return this.ConvertDbResponse(people);
         }

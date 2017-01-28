@@ -251,23 +251,38 @@ span.badge-lit {
 div.avatar-tiny {
     height: 30px;
     width: 30px;
-    display: inline-block;
     line-height: 30px;
     position: relative;
+    display: inline-block;
 }
+
+    div.avatar-tiny img {
+        height: 100%;
+        width: auto;
+        border-radius: 15px;
+        max-height: 30px;
+        max-width: 30px;
+    }
+
+
+
 
 div.avatar-small {
     height: 50px;
     width: 50px;
     border-radius: 25px;
     position: relative;
-    border-radius: 15px;
+    display: inline-block;
 }
 
-img.portrait-small {
-    height: 50px;
-    width: 36px;
-}
+    div.avatar-small img {
+        height: 100%;
+        width: auto;
+        border-radius: 25px;
+        max-height: 50px;
+        max-width: 50px;
+    }
+
 
 div.avatar-med {
     height: 150px;
@@ -278,25 +293,20 @@ div.avatar-med {
 }
 
     div.avatar-med img {
+        height: 100%;
+        width: auto;
         border-radius: 75px;
+        max-height: 150px;
+        max-width: 150px;
     }
 
-div.avatar-tiny img {
-    height: 100%;
-    width: auto;
+
+img.portrait-small {
+    height: 50px;
+    width: 36px;
 }
 
-div.avatar-small img {
-    border-radius: 25px;
-    max-height: 50px; 
-    max-width: 50px;   
-}
 
-div.avatar-small img, div.avatar-tiny img,
-div.avatar-med img {
-    height: 100%;
-    width: auto;
-}
 
 span.helper-block {
     color: #666;
@@ -390,7 +400,7 @@ span.character-name {
     border: 1px solid #e7e7e7;
 }
 
-.list-group-item-text{
+.list-group-item-text {
     color: #333 !important;
 }
 
@@ -480,7 +490,7 @@ a.lit {
 }
 
 
-div.death-slot-overlay{
+div.death-slot-overlay {
     position: absolute;
     z-index: 99;
     height: 100%;
@@ -492,5 +502,5 @@ div.death-slot-overlay{
 }
 
 tr.disabled {
-    background-color: #cdcdcd !important;    
+    background-color: #cdcdcd !important;
 }

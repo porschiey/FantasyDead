@@ -115,7 +115,7 @@
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        public async Task<DataContextResponse> SearchPeople(string s)
+        public async Task<DataContextResponse> SearchPeople(string s, string requestorId)
         {
             s = s.Trim().ToLowerInvariant();
             var queryStr = $"select p.id, p.AvatarPictureUrl, p.Username, p.TotalScore from people p where contains(lower(p.Username), '{s}')";
@@ -129,9 +129,9 @@
                 (this.peopleColUri, queryStr, options)
                 .AsDocumentQuery();
 
-            var result = await q.ExecuteNextAsync<Person>();
+            var result = await q.ExecuteNextAsync<Person>();            
 
-            return new DataContextResponse() { Content = result.ToList() };
+            return new DataContextResponse() { Content = result.Where(p=>p.PersonId != requestorId) };
         }
 
         /// <summary>
