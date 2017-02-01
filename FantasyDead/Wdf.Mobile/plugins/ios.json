@@ -19,11 +19,11 @@
         "cordova-plugin-statusbar": {
             "PACKAGE_NAME": "io.cordova.myappd48d25"
         },
-        "phonegap-plugin-push": {
-            "SENDER_ID": "231469866429",
+        "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "io.cordova.myappd48d25"
         },
-        "cordova-plugin-whitelist": {
+        "phonegap-plugin-push": {
+            "SENDER_ID": "231469866429",
             "PACKAGE_NAME": "io.cordova.myappd48d25"
         }
     },

@@ -243,14 +243,14 @@
 
                 }
 
-
+                imgStream.Position = 0;
                 var act = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["cloudStorage"]);
                 var blobClient = act.CreateCloudBlobClient();
                 var container = blobClient.GetContainerReference(folder);
                 container.CreateIfNotExists();
 
                 var blockBlob = container.GetBlockBlobReference(fullName);
-                using (var stream = file.InputStream)
+                using (imgStream)
                 {
                     blockBlob.UploadFromStream(imgStream);
                 }

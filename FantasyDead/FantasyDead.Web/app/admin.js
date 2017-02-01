@@ -396,7 +396,7 @@
 
 
     app.controller('landingController', ['$scope', '$rootScope', '$http', function ($scope, $rootScope, $http) {
-
+        $http.defaults.headers.common.Authorization = 'Bearer ' + $rootScope.user.token;
 
         //add/edit the episode
         $scope.editEpisode = function (ep, showId, seasonId) {
@@ -667,12 +667,15 @@
                 $http.get('api/person').then(function (pResponse) {
 
                     $rootScope.user = pResponse.data;
-
+                    $rootScope.user.token = token;
                     var uJsonData = btoa(JSON.stringify(pResponse.data));
                     setCookie('fdAuth', uJsonData, 7);
                     setCookie('fdToken', token, 7);
                     $rootScope.loggedIn = true;
                     $location.path('/landing');
+
+                    $rootScope.fetchShowData();
+
                 });
 
             }).catch(function (response) {

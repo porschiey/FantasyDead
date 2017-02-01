@@ -23,6 +23,7 @@
   <platform name="ios">
     <allow-intent href="itms:*" />
     <allow-intent href="itms-apps:*" />
+    <hook type="before_compile" src="hooks/xcode8.js" />
   </platform>
   <platform name="android">
     <icon src="res/icons/android/icon-36-ldpi.png" density="ldpi" />
@@ -118,4 +119,5 @@
   <plugin name="cordova-plugin-headercolor" version="1.0" src="https://github.com/tomloprod/cordova-plugin-headercolor" />
   <allow-navigation href="http://*/*" />
   <plugin name="cordova-plugin-whitelist" version="1.2.3-dev" src="https://github.com/apache/cordova-plugin-whitelist" />
+  <preference name="target-device" value="handset" />
 </widget>

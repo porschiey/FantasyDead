@@ -1,11 +1,22 @@
 {
-     "android": {
-         "release": {
-             "keystore": "",
-             "storePassword": "",
-             "alias": "",
-             "password" : "",
-             "keystoreType": ""
-         }
-     }
- }
+  "android": {
+    "release": {
+      "keystore": "C:\\src\\out\\tfdkey.keystore",
+      "storePassword": "malek0",
+      "alias": "brandon",
+      "password": "malek0",
+      "keystoreType": ""
+    }
+  },
+  "ios": {
+    "debug": {
+      "developmentTeam": "5LKKNWWY9J"
+    },
+    "release": {
+      "developmentTeam": "5LKKNWWY9J"
+    }
+  }
+}
+
+  
+
