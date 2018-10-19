@@ -10,7 +10,7 @@ using System.Configuration;
 public class SimpleAES
 {
     // Change these keys
-    private byte[] Key = { 123, 216, 11, 19, 28, 29, 80, 49, 110, 185, 21, 169, 38, 119, 220, 205, 240, 22, 171, 149, 176, 52, 196, 29, 24, 26, 17, 218, 131, 236, 53, 209 };
+    private byte[] Key = {//REMOVED}
     private byte[] Vector;
 
 
